@@ -1,0 +1,37 @@
+{
+  "name": "Neos Hoppspel",
+  "short_name": "Hoppspel",
+  "description": "Hoppa, tjäna pengar och nå 1 biljon hopp – Neos eget 3D-hoppspel.",
+  "lang": "sv",
+  "start_url": "./",
+  "scope": "./",
+  "id": "./",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "orientation": "any",
+  "background_color": "#74b9ff",
+  "theme_color": "#74b9ff",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
