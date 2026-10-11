@@ -62,6 +62,7 @@ button{font-family:inherit;cursor:pointer;border:none;border-radius:14px;font-we
 #toast{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);background:rgba(45,52,54,.85);color:#fff;padding:10px 18px;border-radius:14px;font-size:16px;max-width:90vw;text-align:center;transition:opacity .3s;pointer-events:none}
 #floaters{position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .floater{position:absolute;font-weight:bold;font-size:20px;color:#fff;text-shadow:0 2px 0 #d63031,0 0 6px rgba(0,0,0,.4);animation:rise 1.1s ease-out forwards;white-space:nowrap}
+.floater.ghost{color:#f3ecff;text-shadow:0 2px 0 #6c3fb5,0 0 8px rgba(108,63,181,.6);font-size:22px}
 .floater.money{color:#ffeaa7;text-shadow:0 2px 0 #b8860b,0 0 6px rgba(0,0,0,.4);font-size:16px}
 @keyframes rise{from{transform:translate(-50%,0);opacity:1}to{transform:translate(-50%,-80px);opacity:0}}
 #fade{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .6s;z-index:40}
@@ -274,6 +275,7 @@ body.arcade-on #touch,body.arcade-on #playHint,body.arcade-on #rotHint{display:n
 <div id="stats">
   <div>Hopp: <b class="big" id="sJumps">0</b></div>
   <div>Pengar: <b id="sMoney">0 kr</b></div>
+  <div id="sGhosts" class="hidden">Spöken: <b id="sGhostN">0</b> 👻</div>
   <div class="more">Per hopp: <b id="sGain">+1</b></div>
   <div class="more">Hopphöjd: <b id="sHeight">0,4 m</b> · Höjd nu: <b id="sAlt">0 m</b></div>
   <div class="more">Hopp i rad: <b id="sAir">0/1</b> · Uppgr.: <b id="sUp">0/50</b></div>
@@ -354,7 +356,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
 const GAME = {
   name: 'Neos Hoppspel',
-  version: '1.7.1',
+  version: '1.8.0',
   saveKey: 'neos-hoppspel-save-v1',
   goal: 1e12,               // 1 biljon hopp = spelet klarat
   teleportHeight: 20,       // meter över marken innan "Teleportera" visas
@@ -473,8 +475,21 @@ const BADGES = [
   { id: 'kompiskampen', name: 'Kompiskampen', emoji: '👥', type: 'versus', key: 'online', need: 1, color: '#9b4dff' },
   { id: 'rekordslagare', name: 'Rekordslagare', emoji: '🤸', type: 'combo', need: 48, color: '#00b3a4' },   // slå Studsmattehallens rekord (47 hopp i rad)
   { id: 'arkadmastare', name: 'Arkadmästare', emoji: '🕹️', type: 'arcade', need: 13, color: '#ffb300' },   // hitta alla 13 hemliga minispel i husen
+  { id: 'spokfangare', name: 'Spökfångare', emoji: '👻', type: 'ghosts', need: 31, color: '#8e44ad' },   // fånga 31 spöken (Halloween)
   { id: 'universum',name: 'Universum',emoji: '🌠', type: 'clear', need: 1,    color: '#fdcb6e' },
 ];
+
+/* ---- Säsonger ----
+   Halloween (1.8.0): enabled: false stänger av allt helt. Annars är det på automatiskt mellan from och to
+   ([månad, dag], båda dagarna räknas med). Spelaren kan välja Auto / Alltid på / Av i ⚙️ Meny.
+   Test/skärmdumpar: ?halloween=1 eller ?halloween=0 i adressen. */
+const SEASON = {
+  halloween: { enabled: true, from: [10, 1], to: [11, 7],
+    ghosts: 28, moonGhosts: 16,      // antal spöken samtidigt (ön / månen)
+    spiders: 16, moonSpiders: 7,     // antal spindlar
+    rewardPresses: 5,                // ett spöke ger 5 × "hopp per tryck"
+    respawn: [6, 14] },              // sekunder innan ett fångat spöke kommer tillbaka
+};
 
 /* ---- Nivåer (efter totalt antal hopp) ---- */
 const LEVELS = [
@@ -546,6 +561,13 @@ const SECRET_HOUSE = { id: 'odehuset', name: 'Ödehuset', angle: 135, dist: 57, 
 
 /* ---- Nyheter / versionslogg (nyast först) ---- */
 const CHANGELOG = [
+  { version: '1.8.0', date: '2026-10-11', items: [
+    '🎃 Halloween! Ön och månen har fått pumpalyktor, spindelnät och en mysig skymningshimmel.',
+    '👻 Söta spöken flyger runt – både lågt och jättehögt. Hoppa in i ett spöke för att fånga det: det ger plushopp (+5 gånger dina hopp per tryck)! Ju högre du hoppar, desto fler spöken når du. Nya spöken dyker upp hela tiden.',
+    '🕷️ Små snälla spindlar kryper runt på marken – de är lite blyga och springer undan när du kommer nära.',
+    'Nytt märke: 👻 Spökfångare – fånga 31 spöken! Antalet fångade spöken syns uppe till vänster.',
+    'Halloween är på automatiskt 1 oktober – 7 november. I ⚙️ Meny kan du välja Auto, Alltid på eller Av.',
+  ]},
   { version: '1.7.1', date: '2026-10-11', items: [
     '🌐 Neos Hoppspel är nu en webbapp: öppna den via en länk – på iPhone, Android, surfplatta och dator. Ingen fil att ladda ner!',
     '📲 Lägg till på hemskärmen (iPhone: Dela → "Lägg till på hemskärmen", Android: "Installera app") – då startar spelet i helskärm med egen ikon och fungerar utan internet.',
@@ -1035,6 +1057,269 @@ window.addEventListener('resize', arcFit);
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
 })();
    // src/minigames.js klistras in här av build.js (hemliga minispel, 1.7.0)
+/* ================= 🎃 Halloween (säsong, 1.8.0) =================
+   Söta spöken att fånga (ger plushopp), spindelnät, små ofarliga spindlar, pumpor och skymningsljus.
+   Styrs av SEASON.halloween i config.js (enabled + datum) och S.halloween.mode ('auto' | 'on' | 'off', ⚙️ Meny).
+   Allt byggs först när det behövs och ritas med InstancedMesh (få draw calls, bra på mobil). */
+const HW = { on: false, built: {}, worlds: {}, checkT: 0, lastY: null, respawnScale: 1 };
+function hwPrefs() { const st = VS_MAIN || S; return st.halloween || { mode: 'auto', ghosts: 0 }; }
+function hwInSeason(d) {
+  const cfg = SEASON.halloween; d = d || new Date();
+  const md = (d.getMonth() + 1) * 100 + d.getDate(), from = cfg.from[0] * 100 + cfg.from[1], to = cfg.to[0] * 100 + cfg.to[1];
+  return from <= to ? md >= from && md <= to : md >= from || md <= to;
+}
+function hwWanted() {
+  if (!SEASON.halloween.enabled) return false;
+  const q = /[?&]halloween=([01])/.exec(location.search); if (q) return q[1] === '1';
+  const m = hwPrefs().mode; return m === 'on' ? true : m === 'off' ? false : hwInSeason();
+}
+function hwModeLabel(m) { return m === 'on' ? 'Alltid på' : m === 'off' ? 'Av' : 'Auto (' + SEASON.halloween.from[1] + '/' + SEASON.halloween.from[0] + '–' + SEASON.halloween.to[1] + '/' + SEASON.halloween.to[0] + ')'; }
+
+/* ---- små geometri-hjälpare ---- */
+function hwMerge(list) {   // slår ihop geometrier (position + normal) till en
+  const parts = list.map((g) => (g.index ? g.toNonIndexed() : g));
+  let n = 0; for (const g of parts) n += g.attributes.position.count;
+  const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3); let o = 0;
+  for (const g of parts) { pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; }
+  const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.BufferAttribute(pos, 3)); out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  return out;
+}
+function hwPlace(g, x, y, z, sx, sy, sz, rx, ry, rz) { g.scale(sx, sy, sz); if (rx) g.rotateX(rx); if (ry) g.rotateY(ry); if (rz) g.rotateZ(rz); g.translate(x, y, z); return g; }
+let HWG = null;   // delade geometrier/material/texturer
+function hwShared() {
+  if (HWG) return HWG;
+  // spöke: rund kupol + kjol med vågig fåll + små armstumpar (framsidan är +z)
+  const dome = new THREE.SphereGeometry(0.6, 22, 11, 0, Math.PI * 2, 0, Math.PI / 2); dome.translate(0, 0.3, 0);
+  const skirt = new THREE.CylinderGeometry(0.6, 0.7, 0.75, 22, 3, true); skirt.translate(0, -0.075, 0);
+  { const p = skirt.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < -0.4) { const a = Math.atan2(p.getX(i), p.getZ(i)); p.setY(i, y + 0.1 * Math.sin(a * 7)); } } skirt.computeVertexNormals(); }
+  const armL = hwPlace(new THREE.SphereGeometry(0.17, 10, 8), -0.66, 0.05, 0.05, 1, 0.75, 0.8, 0, 0, 0.6);
+  const armR = hwPlace(new THREE.SphereGeometry(0.17, 10, 8), 0.66, 0.05, 0.05, 1, 0.75, 0.8, 0, 0, -0.6);
+  const ghostBody = hwMerge([dome, skirt, armL, armR]);
+  const ghostEyes = hwMerge([hwPlace(new THREE.SphereGeometry(0.1, 10, 8), -0.2, 0.42, 0.53, 0.9, 1.3, 0.5),
+    hwPlace(new THREE.SphereGeometry(0.1, 10, 8), 0.2, 0.42, 0.53, 0.9, 1.3, 0.5),
+    hwPlace(new THREE.SphereGeometry(0.07, 10, 8), 0, 0.2, 0.6, 1.1, 0.8, 0.5)]);
+  const ghostCheeks = hwMerge([hwPlace(new THREE.SphereGeometry(0.08, 8, 6), -0.36, 0.27, 0.5, 1.2, 0.7, 0.4),
+    hwPlace(new THREE.SphereGeometry(0.08, 8, 6), 0.36, 0.27, 0.5, 1.2, 0.7, 0.4)]);
+  // spindel: rund kropp + huvud + 8 böjda ben (framsidan är +z)
+  const legs = [];
+  for (const sx of [-1, 1]) for (let k = 0; k < 4; k++) { const a = (k - 1.5) * 0.45;
+    legs.push(hwPlace(new THREE.CylinderGeometry(0.025, 0.025, 0.36, 5), sx * 0.2, 0.17, -0.05 + (k - 1.5) * 0.09, 1, 1, 1, 0, -sx * a, sx * 1.15));
+    legs.push(hwPlace(new THREE.CylinderGeometry(0.022, 0.02, 0.26, 5), sx * 0.39, 0.09, -0.05 + (k - 1.5) * 0.12, 1, 1, 1, 0, -sx * a, -sx * 0.35)); }
+  const spiderBody = hwMerge([hwPlace(new THREE.SphereGeometry(0.2, 12, 9), 0, 0.2, -0.12, 1, 0.85, 1.15), hwPlace(new THREE.SphereGeometry(0.13, 10, 8), 0, 0.17, 0.14, 1, 1, 1)].concat(legs));
+  const spiderEyes = hwMerge([hwPlace(new THREE.SphereGeometry(0.055, 8, 6), -0.06, 0.22, 0.25, 1, 1, 0.7), hwPlace(new THREE.SphereGeometry(0.055, 8, 6), 0.06, 0.22, 0.25, 1, 1, 0.7)]);
+  const spiderPupils = hwMerge([hwPlace(new THREE.SphereGeometry(0.028, 6, 5), -0.06, 0.225, 0.29, 1, 1, 0.6), hwPlace(new THREE.SphereGeometry(0.028, 6, 5), 0.06, 0.225, 0.29, 1, 1, 0.6)]);
+  // pumpa: tillplattad klot med fåror, stjälk och lysande ansikte
+  const pg = new THREE.SphereGeometry(0.5, 20, 14);
+  { const p = pg.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), a = Math.atan2(x, z), r = 1 - 0.07 * Math.abs(Math.sin(a * 4));
+      p.setXYZ(i, x * r * 1.15, y * 0.78 + 0.39, z * r * 1.15); } pg.computeVertexNormals(); }
+  const stem = hwPlace(new THREE.CylinderGeometry(0.05, 0.08, 0.22, 6), 0.02, 0.86, 0, 1, 1, 1, 0, 0, -0.25);
+  const faceTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
+    x.fillStyle = '#ffe066'; x.shadowColor = '#ff9f1a'; x.shadowBlur = 8;
+    const tri = (ax, ay, bx, by, cx, cy) => { x.beginPath(); x.moveTo(ax, ay); x.lineTo(bx, by); x.lineTo(cx, cy); x.closePath(); x.fill(); };
+    tri(26, 58, 50, 58, 38, 30); tri(78, 58, 102, 58, 90, 30); tri(56, 72, 72, 72, 64, 58);
+    x.beginPath(); x.moveTo(22, 82); x.quadraticCurveTo(64, 122, 106, 82); x.lineTo(92, 88); x.lineTo(84, 82); x.lineTo(74, 92); x.lineTo(64, 84); x.lineTo(54, 92); x.lineTo(44, 82); x.lineTo(36, 88); x.closePath(); x.fill();
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const face = new THREE.PlaneGeometry(0.72, 0.72); face.translate(0, 0.4, 0.5);
+  // spindelnät: hel (rund) och hörn-variant
+  const webTex = (corner) => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+    x.strokeStyle = 'rgba(255,255,255,0.92)'; x.lineWidth = 2.2; x.lineCap = 'round';
+    const cx = corner ? 0 : 128, cy = corner ? 0 : 128, R = corner ? 250 : 122, a0 = corner ? 0 : 0, a1 = corner ? Math.PI / 2 : Math.PI * 2, spokes = corner ? 6 : 12;
+    const ang = []; for (let i = 0; i <= spokes; i++) { if (!corner && i === spokes) break; ang.push(a0 + (a1 - a0) * i / spokes); }
+    for (const a of ang) { x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); x.stroke(); }
+    x.lineWidth = 1.6;
+    for (let ring = 1; ring <= 6; ring++) { const rr = R * ring / 6.4; x.beginPath();
+      ang.forEach((a, i) => { const px = cx + Math.cos(a) * rr, py = cy + Math.sin(a) * rr; if (i === 0) x.moveTo(px, py); else { const pa = ang[i - 1], m = (a + pa) / 2, sag = rr * 0.86;
+        x.quadraticCurveTo(cx + Math.cos(m) * sag, cy + Math.sin(m) * sag, px, py); } });
+      if (!corner) { const a = ang[0], pa = ang[ang.length - 1], m = (pa + Math.PI * 2 + a) / 2, sag = rr * 0.86; x.quadraticCurveTo(cx + Math.cos(m) * sag, cy + Math.sin(m) * sag, cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); }
+      x.stroke(); }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  const webMat = (tex) => new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -2 });
+  HWG = {
+    ghostBody, ghostEyes, ghostCheeks, spiderBody, spiderEyes, spiderPupils, pumpkin: pg, stem, face,
+    mGhost: mat('#ffffff', { emissive: C('#d9ddff'), emissiveIntensity: 0.45, roughness: 0.5, transparent: true, opacity: 0.93 }),
+    mEyes: new THREE.MeshBasicMaterial({ color: C('#2d1b46') }), mCheeks: new THREE.MeshBasicMaterial({ color: C('#ff9ecb') }),
+    mSpider: mat('#3a2f4a', { roughness: 0.55 }), mWhite: new THREE.MeshBasicMaterial({ color: 0xffffff }), mBlack: new THREE.MeshBasicMaterial({ color: 0x111111 }),
+    mPumpkin: mat('#ff8c1a', { roughness: 0.6, emissive: C('#7a2e00'), emissiveIntensity: 0.25 }), mStem: mat('#4e7d2a'),
+    mFace: new THREE.MeshBasicMaterial({ map: faceTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
+    mWeb: webMat(webTex(false)), mWebCorner: webMat(webTex(true)),
+  };
+  return HWG;
+}
+function hwInst(geo, m, n, group) { const im = new THREE.InstancedMesh(geo, m, n); im.frustumCulled = false; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); group.add(im); return im; }
+
+/* ---- bygg en värld ('island' | 'moon') ---- */
+function hwBuild(w) {
+  if (HW.worlds[w]) return HW.worlds[w];
+  const G = hwShared(), cfg = SEASON.halloween, scene = w === 'moon' ? moon : island, r = rng(w === 'moon' ? 1031 : 3110);
+  const group = new THREE.Group(); group.name = 'halloween-' + w; scene.add(group);
+  const ground = (x, z) => (w === 'moon' ? 0 : terrainH(x, z));
+  const inSolid = (x, z, pad) => { if (w === 'moon') return false; for (const s of solids) { const [lx, lz] = toLocal(s, x, z); if (Math.abs(lx) < s.hw + pad && Math.abs(lz) < s.hd + pad) return true; } return false; };
+  const maxR = w === 'moon' ? 42 : R - 10;
+  const W = { w, group, scene, ground, inSolid, maxR, ghosts: [], spiders: [] };
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  const setM = (im, i, x, y, z, ry, s) => { e.set(0, ry, 0); q.setFromEuler(e); m4.compose(v.set(x, y, z), q, sc.set(s, s, s)); im.setMatrixAt(i, m4); };
+  // --- spöken ---
+  const nG = w === 'moon' ? cfg.moonGhosts : cfg.ghosts;
+  W.gBody = hwInst(G.ghostBody, G.mGhost, nG, group); W.gEyes = hwInst(G.ghostEyes, G.mEyes, nG, group); W.gCheeks = hwInst(G.ghostCheeks, G.mCheeks, nG, group);
+  const tints = ['#ffffff', '#ffffff', '#e8f6ff', '#f1e8ff', '#e9fff4', '#fff0f6'];
+  for (let i = 0; i < nG; i++) {
+    const tier = i % 10 < 3 ? 0 : i % 10 < 6 ? 1 : i % 10 < 8 ? 2 : 3;   // 30 % låga, 30 % mellan, 20 % höga, 20 % jättehöga
+    const g = { i, tier, active: true, respawn: 0, grow: 1, phase: r() * 6.28, speed: 0.25 + r() * 0.35, orbit: 1.5 + r() * 4, yaw: 0 };
+    hwGhostSpot(W, g, r); W.gBody.setColorAt(i, C(tints[i % tints.length])); W.ghosts.push(g);
+  }
+  W.gBody.instanceColor.needsUpdate = true;
+  // --- spindlar ---
+  const nS = w === 'moon' ? cfg.moonSpiders : cfg.spiders;
+  W.sBody = hwInst(G.spiderBody, G.mSpider, nS, group); W.sEyes = hwInst(G.spiderEyes, G.mWhite, nS, group); W.sPupils = hwInst(G.spiderPupils, G.mBlack, nS, group);
+  for (let i = 0; i < nS; i++) { let x = 0, z = 0;
+    for (let k = 0; k < 40; k++) { const a = r() * 6.28, d = 5 + r() * (w === 'moon' ? 30 : 34); x = Math.sin(a) * d; z = Math.cos(a) * d; if (!inSolid(x, z, 0.6)) break; }
+    W.spiders.push({ x, z, dir: r() * 6.28, speed: 0.7, turn: r() * 2, phase: r() * 6.28, s: 0.8 + r() * 0.5 }); }
+  // --- pumpor (statiska) ---
+  const pumpSpots = [];
+  if (w === 'moon') { for (const [x, z] of [[-6, -12], [6, -12], [-3, 9], [4, 9], [14, -6], [-14, -4], [18, 6], [-18, 8]]) pumpSpots.push([x, z, Math.atan2(-x, 4 - z)]); }
+  else {
+    for (const s of solids) if (s.doorX !== undefined && s.def && s.def.shape !== 'tower') { const side = (s.def.name.length % 2 ? 1 : -1);
+      const [x, z] = toWorld(s, side * Math.min(s.hw - 0.4, 2.1), s.hd + 0.7); pumpSpots.push([x, z, s.rot + (r() - 0.5) * 0.6]); }
+    for (let i = 0; i < 6; i++) { const a = i / 6 * 6.28 + 0.3, d = 6.6; pumpSpots.push([Math.sin(a) * d, Math.cos(a) * d, a + (r() - 0.5) * 0.5]); }
+  }
+  W.pBody = hwInst(G.pumpkin, G.mPumpkin, pumpSpots.length, group); W.pStem = hwInst(G.stem, G.mStem, pumpSpots.length, group); W.pFace = hwInst(G.face, G.mFace, pumpSpots.length, group);
+  pumpSpots.forEach(([x, z, ry], i) => { const s = 0.75 + r() * 0.5, y = ground(x, z) - 0.02; setM(W.pBody, i, x, y, z, ry, s); setM(W.pStem, i, x, y, z, ry, s); setM(W.pFace, i, x, y, z, ry, s); });
+  for (const im of [W.pBody, W.pStem, W.pFace]) { im.instanceMatrix.setUsage(THREE.StaticDrawUsage); im.instanceMatrix.needsUpdate = true; }
+  W.pumpkins = pumpSpots.length;
+  // --- spindelnät (statiska) ---
+  const webs = [], corners = [];   // [x,y,z, rx,ry,rz, sx,sy]
+  if (w === 'island') {
+    for (const s of solids) if (s.doorX !== undefined && s.def && s.def.shape !== 'tower') {   // hörnnät uppe i husets främre hörn
+      const top = Math.min(s.def.h - 0.5, 4.4), sz = 1.5;
+      for (const side of [-1, 1]) { const [x, z] = toWorld(s, side * (s.hw - 0.35 - sz / 2), s.hd + 0.04); corners.push([x, top - sz / 2, z, 0, s.rot, 0, -side * sz, sz]); } }
+    // mellan träd som står nära varandra
+    let n = 0; for (let i = 0; i < TREE_POS.length && n < 9; i++) for (let j = i + 1; j < TREE_POS.length && n < 9; j++) {
+      const a = TREE_POS[i], b = TREE_POS[j], d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (d < 3.2 || d > 6.5) continue;
+      const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2, y = Math.min(ground(a[0], a[1]), ground(b[0], b[1])) + 1.7;
+      webs.push([mx, y, mz, 0, Math.atan2(b[1] - a[1], b[0] - a[0]) * -1, 0, d - 0.5, 1.8]); n++; i++; }
+    // lyktstolpar med pumpalyktor runt torget, två och två med ett nät emellan
+    const posts = [];
+    for (let i = 0; i < 4; i++) { const a = i / 4 * 6.28 + 0.78, cx = Math.sin(a) * 9.5, cz = Math.cos(a) * 9.5, tx = Math.cos(a), tz = -Math.sin(a);
+      const pa = [cx - tx * 1.5, cz - tz * 1.5], pb = [cx + tx * 1.5, cz + tz * 1.5]; if (inSolid(pa[0], pa[1], 0.4) || inSolid(pb[0], pb[1], 0.4)) continue;
+      posts.push(pa, pb); webs.push([cx, ground(cx, cz) + 1.55, cz, 0, Math.atan2(-tz, tx), 0, 2.7, 1.7]); }
+    if (posts.length) {
+      const pole = new THREE.CylinderGeometry(0.07, 0.09, 2.6, 8); pole.translate(0, 1.3, 0);
+      const lant = new THREE.SphereGeometry(0.26, 12, 9); lant.translate(0, 2.75, 0);
+      W.posts = hwInst(pole, mat('#3d3450'), posts.length, group); W.lanterns = hwInst(lant, new THREE.MeshBasicMaterial({ color: C('#ffb347') }), posts.length, group);
+      posts.forEach(([x, z], i) => { setM(W.posts, i, x, ground(x, z), z, 0, 1); setM(W.lanterns, i, x, ground(x, z), z, 0, 1); });
+      W.posts.instanceMatrix.needsUpdate = W.lanterns.instanceMatrix.needsUpdate = true; }
+  }
+  // nät på marken
+  for (let i = 0; i < (w === 'moon' ? 6 : 12); i++) { let x = 0, z = 0;
+    for (let k = 0; k < 30; k++) { const a = r() * 6.28, d = 6 + r() * (w === 'moon' ? 28 : 40); x = Math.sin(a) * d; z = Math.cos(a) * d; if (!inSolid(x, z, 1.5)) break; }
+    const s = 1.4 + r() * 1.2; webs.push([x, ground(x, z) + 0.04, z, -Math.PI / 2, 0, r() * 6.28, s, s]); }
+  const plane = new THREE.PlaneGeometry(1, 1);
+  const addPlanes = (list, m) => { if (!list.length) return null; const im = new THREE.InstancedMesh(plane, m, list.length);
+    list.forEach((p, i) => { e.set(p[3], p[4], p[5], 'YXZ'); if (p[3]) e.set(p[3], 0, p[5], 'XYZ'); q.setFromEuler(e); m4.compose(v.set(p[0], p[1], p[2]), q, sc.set(p[6], p[7], 1)); im.setMatrixAt(i, m4); });
+    im.instanceMatrix.needsUpdate = true; im.renderOrder = 2; group.add(im); return im; };
+  W.webs = addPlanes(webs, G.mWeb); W.cornerWebs = addPlanes(corners, G.mWebCorner);
+  W.webCount = webs.length + corners.length;
+  hwDrawGhosts(W, 0); hwDrawSpiders(W, 0);
+  HW.worlds[w] = W; return W;
+}
+function hwGhostSpot(W, g, r) {
+  r = r || Math.random; const ranges = [[1.0, 2.3], [3, 12], [12, 45], [45, 160]], rg = ranges[g.tier];
+  let x = 0, z = 0;
+  for (let k = 0; k < 30; k++) { const a = r() * 6.28, d = 4 + r() * (W.maxR - 4); x = Math.sin(a) * d; z = Math.cos(a) * d; if (g.tier > 0 || (!W.inSolid(x, z, 1.2) && Math.hypot(x, z) > 8)) break; }   // låga spöken inte precis vid startplatsen
+  g.cx = x; g.cz = z; g.h = rg[0] + r() * (rg[1] - rg[0]); g.x = x; g.z = z; g.y = W.ground(x, z) + g.h;
+}
+
+/* ---- uppdatering varje bildruta ---- */
+const _hm = new THREE.Matrix4(), _hq = new THREE.Quaternion(), _he = new THREE.Euler(), _hv = new THREE.Vector3(), _hs = new THREE.Vector3();
+function hwDrawGhosts(W, t) {
+  W.ghosts.forEach((g, i) => {
+    const s = g.active ? 1.15 * g.grow * (1 + Math.sin(t * 3 + g.phase) * 0.03) : 0;
+    _he.set(Math.sin(t * 1.3 + g.phase) * 0.12, g.yaw, Math.sin(t * 1.7 + g.phase) * 0.1); _hq.setFromEuler(_he);
+    _hm.compose(_hv.set(g.x, g.y, g.z), _hq, _hs.set(s, s, s));
+    W.gBody.setMatrixAt(i, _hm); W.gEyes.setMatrixAt(i, _hm); W.gCheeks.setMatrixAt(i, _hm);
+  });
+  W.gBody.instanceMatrix.needsUpdate = W.gEyes.instanceMatrix.needsUpdate = W.gCheeks.instanceMatrix.needsUpdate = true;
+}
+function hwDrawSpiders(W, t) {
+  W.spiders.forEach((p, i) => {
+    const y = W.ground(p.x, p.z) + 0.02 + Math.abs(Math.sin(t * 14 * p.speed + p.phase)) * 0.025;
+    _he.set(0, p.dir + Math.sin(t * 18 * Math.min(p.speed, 3) + p.phase) * 0.08, 0); _hq.setFromEuler(_he);
+    _hm.compose(_hv.set(p.x, y, p.z), _hq, _hs.set(p.s, p.s, p.s));
+    W.sBody.setMatrixAt(i, _hm); W.sEyes.setMatrixAt(i, _hm); W.sPupils.setMatrixAt(i, _hm);
+  });
+  W.sBody.instanceMatrix.needsUpdate = W.sEyes.instanceMatrix.needsUpdate = W.sPupils.instanceMatrix.needsUpdate = true;
+}
+function hwUpdate(dt, t) {
+  HW.checkT -= dt; if (HW.checkT <= 0) { HW.checkT = 30; if (hwWanted() !== HW.on) hwApply(); }
+  if (!HW.on) { HW.lastY = null; return; }
+  const W = HW.worlds[world]; if (!W) return;
+  const py0 = HW.lastY === null ? P.y : HW.lastY; HW.lastY = P.y;
+  const lo = Math.min(py0, P.y) - 0.7, hi = Math.max(py0, P.y) + 1.9, busy = uiOpen();
+  for (const g of W.ghosts) {
+    if (!g.active) { g.respawn -= dt; if (g.respawn <= 0) { hwGhostSpot(W, g); g.active = true; g.grow = 0.01; } continue; }
+    if (g.grow < 1) g.grow = Math.min(1, g.grow + dt * 1.5);
+    const a = t * g.speed + g.phase;
+    g.x = g.cx + Math.sin(a) * g.orbit; g.z = g.cz + Math.cos(a * 0.8) * g.orbit;
+    g.y = W.ground(g.cx, g.cz) + g.h + Math.sin(t * 1.6 + g.phase) * 0.35;
+    const want = Math.atan2(P.x - g.x, P.z - g.z); let d = want - g.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); g.yaw += d * Math.min(1, dt * 2);
+    if (!busy && g.grow > 0.5 && g.y > lo && g.y < hi && Math.hypot(P.x - g.x, P.z - g.z) < 1.2) hwCatch(W, g);
+  }
+  hwDrawGhosts(W, t);
+  // spindlar: kryper runt, springer undan när man kommer nära
+  for (const p of W.spiders) {
+    const dx = p.x - P.x, dz = p.z - P.z, dist = Math.hypot(dx, dz), nearP = dist < 3.2 && P.y - W.ground(P.x, P.z) < 2.5;
+    if (nearP) { p.dir = Math.atan2(dx, dz); p.speed = 4.2; p.turn = 0.8; }
+    else { p.turn -= dt; if (p.turn <= 0) { p.turn = 1 + Math.random() * 2.5; p.dir += (Math.random() - 0.5) * 2.2; p.speed = Math.random() < 0.25 ? 0 : 0.5 + Math.random() * 0.6; }
+      p.speed = Math.max(p.speed > 1.2 ? p.speed - dt * 3 : p.speed, 0); }
+    if (p.speed > 0) {   // hinder: prova att vika av åt sidan (så att en spindel på flykt inte fastnar), annars vänd
+      const free = (d) => { const nx = p.x + Math.sin(d) * p.speed * dt, nz = p.z + Math.cos(d) * p.speed * dt, r = Math.hypot(nx, nz);
+        return r < W.maxR - 4 && r > 3 && !W.inSolid(nx, nz, 0.3) ? [nx, nz] : null; };
+      let ok = null;
+      for (const off of [0, 0.7, -0.7, 1.4, -1.4]) { ok = free(p.dir + off); if (ok) { p.dir += off; break; } }
+      if (ok) { p.x = ok[0]; p.z = ok[1]; } else { p.dir += Math.PI * (0.6 + Math.random() * 0.8); p.turn = 1; }
+    }
+  }
+  hwDrawSpiders(W, t);
+}
+function hwReward() { return Math.max(1, gainPerJump()) * SEASON.halloween.rewardPresses; }
+function hwCatch(W, g) {
+  g.active = false; g.respawn = (SEASON.halloween.respawn[0] + Math.random() * (SEASON.halloween.respawn[1] - SEASON.halloween.respawn[0])) * HW.respawnScale;
+  const gain = hwReward(); S.jumps += gain;
+  const pr = hwPrefs(); if ((VS_MAIN || S).halloween) pr.ghosts++;
+  puff(W.scene, g.x, g.y - 0.3, g.z, '#e6dcff', 12); puff(W.scene, g.x, g.y + 0.2, g.z, '#fff3a0', 8);
+  floater('+' + fmt(gain) + ' hopp 👻', 'ghost'); sfx.ghost();
+  $('sGhostN').textContent = fmt(pr.ghosts);
+  if (pr.ghosts === 1) toast('👻 Du fångade ett spöke! Spökena ger plushopp – hoppa högt för att nå fler!', 3);
+  checkProgress(); refreshHud();
+}
+
+/* ---- slå på/av (bygger lat, behåller allt i minnet) ---- */
+const HW_SKY = { hor: C('#ffc89a'), top: C('#9b86da'), hemi: C('#efe1ff'), sun: C('#ffd2a0'), moonBg: C('#160c2c') };
+let hwSkyCols = null, hwSkyOrig = null;
+function hwApply() {
+  const on = hwWanted(); HW.on = on;
+  if (on) { hwBuild('island'); if (moonBuilt) hwBuild('moon'); }
+  for (const k of Object.keys(HW.worlds)) HW.worlds[k].group.visible = on;
+  // skymningston (lätt, spelet ska vara lika lättläst)
+  if (!hwSkyOrig) { hwSkyOrig = skyGeo.attributes.color;
+    const p = skyGeo.attributes.position, cols = [], tmp = new THREE.Color();
+    for (let i = 0; i < p.count; i++) { const y = p.getY(i) / 20000; tmp.copy(HW_SKY.hor).lerp(HW_SKY.top, clamp(Math.pow(Math.max(0, y), 0.55), 0, 1)); cols.push(tmp.r, tmp.g, tmp.b); }
+    hwSkyCols = new THREE.Float32BufferAttribute(cols, 3); }
+  skyGeo.setAttribute('color', on ? hwSkyCols : hwSkyOrig);
+  skyCol.copy(on ? HW_SKY.hor : C(STYLE.skyHorizon));
+  hemi.color.copy(on ? HW_SKY.hemi : C(STYLE.hemiSky)); sun.color.copy(on ? HW_SKY.sun : C(STYLE.sun));
+  if (moonBuilt) moon.background.copy(on ? HW_SKY.moonBg : C(STYLE.space));
+  document.body.classList.toggle('halloween', on);
+  $('sGhosts').classList.toggle('hidden', !on); $('sGhostN').textContent = fmt(hwPrefs().ghosts);
+  HW.lastY = null;
+}
+function hwOnMoonBuilt() { if (HW.on) { hwBuild('moon'); HW.worlds.moon.group.visible = true; moon.background.copy(HW_SKY.moonBg); } }
+function hwCycleMode() {
+  const st = VS_MAIN || S; if (!st.halloween) st.halloween = { mode: 'auto', ghosts: 0 };
+  st.halloween.mode = st.halloween.mode === 'auto' ? 'on' : st.halloween.mode === 'on' ? 'off' : 'auto';
+  if (st === S) save(); hwApply(); return st.halloween.mode;
+}
+   // src/halloween.js klistras in här av build.js (säsong: spöken, spindlar, pumpor, 1.8.0)
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -1058,7 +1343,7 @@ function fmtM(m) { return m < 10 ? m.toFixed(1).replace('.', ',') + ' m' : fmt(m
 /* ================= Sparning ================= */
 const DEFAULT_STATE = { jumps: 0, money: 0, presses: 0, up: 0, stilt: 0, badges: [], level: 0,
   cleared: false, infinite: false, seenVersion: '', muted: false, best: 0, tipAir: false, secrets: [],
-  bestCombo: 0, airJumps: 0, purchases: 0, pos: null, savedAt: 0, vsWins: null, jumpKey: 'Space', arcade: null };
+  bestCombo: 0, airJumps: 0, purchases: 0, pos: null, savedAt: 0, vsWins: null, jumpKey: 'Space', arcade: null, halloween: null };
 let S;
 function sanitize(o) {
   const st = Object.assign({}, DEFAULT_STATE, o || {});
@@ -1072,6 +1357,9 @@ function sanitize(o) {
   const ar = st.arcade && typeof st.arcade === 'object' ? st.arcade : {}, best = {};
   if (ar.best && typeof ar.best === 'object') for (const k of Object.keys(ar.best)) { const v = Number(ar.best[k]); if (/^[a-z]{1,24}$/.test(k) && isFinite(v) && v > 0) best[k] = Math.floor(v); }
   st.arcade = { best, found: Array.isArray(ar.found) ? ar.found.filter((x) => typeof x === 'string' && /^[a-z]{1,24}$/.test(x)).filter((x, i, a) => a.indexOf(x) === i) : [], plays: isFinite(Number(ar.plays)) && Number(ar.plays) > 0 ? Math.floor(Number(ar.plays)) : 0 };
+  // Halloween (1.8.0): läge auto/på/av + antal fångade spöken
+  const hw = st.halloween && typeof st.halloween === 'object' ? st.halloween : {};
+  st.halloween = { mode: ['auto', 'on', 'off'].includes(hw.mode) ? hw.mode : 'auto', ghosts: isFinite(Number(hw.ghosts)) && Number(hw.ghosts) > 0 ? Math.floor(Number(hw.ghosts)) : 0 };
   st.pos = st.pos && typeof st.pos === 'object' && isFinite(st.pos.x) && isFinite(st.pos.z) ? st.pos : null;
   return st;
 }
@@ -1124,6 +1412,7 @@ const sfx = {
   boom() { beep(120, 0.4, 'sawtooth', 0.05, 40); },
   door(o) { beep(o ? 240 : 170, 0.14, 'triangle', 0.04, o ? 360 : 110); },
   boing() { beep(180, 0.25, 'sine', 0.1, 520); },
+  ghost() { beep(520, 0.12, 'sine', 0.1, 1040); setTimeout(() => beep(1320, 0.2, 'triangle', 0.07, 1760), 70); },
 };
 
 /* ================= Three.js grund ================= */
@@ -1704,7 +1993,7 @@ function freeSpot(x, z, pad) {
 }
 const trunkGeo = new THREE.CylinderGeometry(0.28, 0.4, 2, 10), ballGeo = new THREE.SphereGeometry(1.6, 18, 12), coneGeo = new THREE.ConeGeometry(1.7, 3.4, 10);
 const trunkMat = mat(STYLE.treeTrunk), leafMats = STYLE.treeLeaf.map((c) => mat(c, { roughness: 0.6 }));
-let trees = 0;
+let trees = 0; const TREE_POS = [];   // [x, z, skala] – används för Halloween-näten
 for (let i = 0; i < 600 && trees < 60; i++) {
   const a = rand() * Math.PI * 2, d = 12 + rand() * (R - 18), x = Math.sin(a) * d, z = Math.cos(a) * d;
   if (!freeSpot(x, z, 3.5)) continue;
@@ -1713,7 +2002,7 @@ for (let i = 0; i < 600 && trees < 60; i++) {
   const lm = leafMats[trees % leafMats.length];
   if (trees % 3 === 2) { const c = new THREE.Mesh(coneGeo, lm); c.position.y = 3.2; c.castShadow = true; t.add(c); }
   else { const ball = new THREE.Mesh(ballGeo, lm); ball.position.y = 3.1; ball.scale.set(1, 1.15, 1); ball.castShadow = true; t.add(ball); }
-  t.position.set(x, terrainH(x, z) - 0.05, z); t.scale.setScalar(s); island.add(t); trees++;
+  t.position.set(x, terrainH(x, z) - 0.05, z); t.scale.setScalar(s); island.add(t); trees++; TREE_POS.push([x, z, s]);
 }
 const bushGeo = new THREE.SphereGeometry(0.8, 14, 10), flowerGeo = new THREE.SphereGeometry(0.16, 8, 6);
 for (let i = 0, n = 0; i < 400 && n < 50; i++) {
@@ -1877,7 +2166,7 @@ function nextPopup() {
 }
 
 /* ================= Märken & nivåer ================= */
-function badgeValue(b) { if (b.type === 'versus') return (S.vsWins && S.vsWins[b.key]) || 0; if (b.type === 'secret') return S.secrets.includes(b.secret) ? 1 : 0; if (b.type === 'combo') return S.bestCombo; if (b.type === 'arcade') return S.arcade.found.length; return b.type === 'upgrades' ? S.up : b.type === 'jumps' ? S.jumps : b.type === 'clear' ? (S.cleared ? 1 : 0) : 0; }
+function badgeValue(b) { if (b.type === 'versus') return (S.vsWins && S.vsWins[b.key]) || 0; if (b.type === 'secret') return S.secrets.includes(b.secret) ? 1 : 0; if (b.type === 'combo') return S.bestCombo; if (b.type === 'arcade') return S.arcade.found.length; if (b.type === 'ghosts') return S.halloween ? S.halloween.ghosts : 0; return b.type === 'upgrades' ? S.up : b.type === 'jumps' ? S.jumps : b.type === 'clear' ? (S.cleared ? 1 : 0) : 0; }
 function checkProgress() {
   if (VS) return;
   for (const b of BADGES) if (!S.badges.includes(b.id) && badgeValue(b) >= b.need) {
@@ -2127,7 +2416,7 @@ function arcadeSummary() {
 }
 function openBadges() {
   const html = '<div class="badges">' + BADGES.map((b) => { const has = S.badges.includes(b.id);
-    const req = b.type === 'versus' ? (b.key === 'bot' ? 'Vinn mot boten' : 'Vinn mot en kompis') : b.type === 'secret' ? 'Hitta en hemlighet' : b.type === 'combo' ? b.need + ' hopp i rad' : b.type === 'arcade' ? 'Hitta alla ' + b.need + ' hemliga spel' : b.type === 'upgrades' ? b.need + ' uppgr.' : b.type === 'jumps' ? fmt(b.need) + ' hopp' : 'Klara spelet';
+    const req = b.type === 'versus' ? (b.key === 'bot' ? 'Vinn mot boten' : 'Vinn mot en kompis') : b.type === 'secret' ? 'Hitta en hemlighet' : b.type === 'combo' ? b.need + ' hopp i rad' : b.type === 'arcade' ? 'Hitta alla ' + b.need + ' hemliga spel' : b.type === 'ghosts' ? 'Fånga ' + b.need + ' spöken (Halloween)' : b.type === 'upgrades' ? b.need + ' uppgr.' : b.type === 'jumps' ? fmt(b.need) + ' hopp' : 'Klara spelet';
     return '<div class="badge' + (has ? '' : ' locked') + '" style="' + (has ? 'border:3px solid ' + b.color : '') + '"><span class="em">' + b.emoji + '</span><b>' + b.name + '</b><br>' + req + '</div>'; }).join('') + '</div>' + arcadeSummary();
   openModal('badges', '🏅 Märken (' + S.badges.length + '/' + BADGES.length + ')', html, 'Märkena tjänas med uppgraderingar (max 50), många hopp, hopp i rad, hemligheter och genom att klara spelet.');
 }
@@ -2175,12 +2464,14 @@ window.addEventListener('keydown', (e) => {
 function openMenu() {
   openModal('menu', '⚙️ Meny', itemRow('⌨️', 'Byt hoppknapp', 'Nu hoppar du med <b>' + keyName(S.jumpKey) + '</b>.', 'Byt', true, false, 'rebind') +
     itemRow('↩️', 'Återställ hoppknappen', 'Hoppa med Mellanslag igen.', 'Mellanslag', S.jumpKey !== 'Space', false, 'rebindreset') +
+    itemRow('🎃', 'Halloween', 'Spöken, spindlar och pumpor. Läge: <b>' + hwModeLabel(hwPrefs().mode) + '</b>' + (HW.on ? ' – på nu 👻' : ' – av nu') + '. Fångade spöken: <b>' + fmt(hwPrefs().ghosts) + '</b>.', 'Byt läge', SEASON.halloween.enabled, false, 'halloween') +
     itemRow('🗑️', 'Börja om från början', 'Raderar allt sparat (hopp, pengar, märken).', 'Börja om', true, false, 'reset') +
     '<div class="sub">' + GAME.name + ' version ' + GAME.version + '. Spelet sparas automatiskt i webbläsaren.</div>');
 }
 $('mBody').addEventListener('click', (e) => { const b = e.target.closest('button[data-act]'); if (!b) return;
   if (b.dataset.act === 'rebind') { openRebind(); return; }
   if (b.dataset.act === 'rbcancel') { openMenu(); return; }
+  if (b.dataset.act === 'halloween') { const m = hwCycleMode(); sfx.buy(); openMenu(); toast('🎃 Halloween: ' + hwModeLabel(m), 2); return; }
   if (b.dataset.act === 'rebindreset') { setJumpKey('Space'); sfx.buy(); openMenu(); toast('Hoppknappen är Mellanslag igen.', 2); return; }
   if (b.dataset.act !== 'reset') return;
   if (confirm('Vill du verkligen börja om? Allt försvinner!')) { localStorage.removeItem(GAME.saveKey); window.removeEventListener('beforeunload', save); location.reload(); } });
@@ -2262,6 +2553,7 @@ function buildMoon() {
   for (let i = 0; i < n; i++) { col.set(colors[i % colors.length]); confetti.setColorAt(i, col);
     confettiData.push({ x: (r() - 0.5) * 50, y: r() * 30, z: (r() - 0.5) * 50, rx: r() * 6, ry: r() * 6, s: 1 + r() * 2 }); }
   confetti.frustumCulled = false; moon.add(confetti);
+  hwOnMoonBuilt();
 }
 const dummy = new THREE.Object3D();
 function spawnFirework() {
@@ -2427,6 +2719,7 @@ function step() {
   // teleport-knapp
   $('bTeleport').classList.toggle('hidden', !canTeleport() || uiOpen());
   updatePuffs(dt);
+  hwUpdate(dt, t);
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').style.opacity = 0; }
   hudT -= dt; if (hudT <= 0) { hudT = 0.15; $('sAlt').textContent = fmtM(altitude); const mj = maxJumps(); $('sAir').textContent = P.used + '/' + (isFinite(mj) ? mj : '∞'); }
   if (VS) updateVersus(dt, t);
@@ -2924,7 +3217,8 @@ $('bStart').addEventListener('click', () => {
   if (S.seenVersion !== GAME.version) { if (S.seenVersion) openNews(); else { S.seenVersion = GAME.version; save(); toast('Tryck ' + keyName(S.jumpKey).toUpperCase() + ' (eller HOPPA!) för att hoppa. Gå till butikerna runt torget!', 5); } }
   if (S.cleared) toast('Välkommen tillbaka, månhoppare! ♾️', 3);
 });
-window.__hoppspel = { ARC, MINIGAMES, openArcade, closeArcade, arcStart, get uiOpen() { return uiOpen(); }, S, P, cam, HOUSE, solids, autosaveLog, openShop, get VS() { return VS; }, get VS_MAIN() { return VS_MAIN; }, get FREE() { return FREE; }, JOY, WALK, modeName, BUILDINGS, NET: () => NET, fmt, gainPerJump, jumpHeight, maxJumps, get world() { return world; } };
+hwApply();
+window.__hoppspel = { HW, hwApply, hwCycleMode, hwInSeason, hwReward, ARC, MINIGAMES, openArcade, closeArcade, arcStart, get uiOpen() { return uiOpen(); }, S, P, cam, HOUSE, solids, autosaveLog, openShop, get VS() { return VS; }, get VS_MAIN() { return VS_MAIN; }, get FREE() { return FREE; }, JOY, WALK, modeName, BUILDINGS, NET: () => NET, fmt, gainPerJump, jumpHeight, maxJumps, get world() { return world; } };
 })();
 </script>
 <script>/* webbapp: offline + be om beständig lagring (sparningen ska inte rensas) */
