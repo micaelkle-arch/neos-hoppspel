@@ -356,7 +356,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
 const GAME = {
   name: 'Neos Hoppspel',
-  version: '1.8.0',
+  version: '1.8.1',
   saveKey: 'neos-hoppspel-save-v1',
   goal: 1e12,               // 1 biljon hopp = spelet klarat
   teleportHeight: 20,       // meter över marken innan "Teleportera" visas
@@ -475,6 +475,7 @@ const BADGES = [
   { id: 'kompiskampen', name: 'Kompiskampen', emoji: '👥', type: 'versus', key: 'online', need: 1, color: '#9b4dff' },
   { id: 'rekordslagare', name: 'Rekordslagare', emoji: '🤸', type: 'combo', need: 48, color: '#00b3a4' },   // slå Studsmattehallens rekord (47 hopp i rad)
   { id: 'arkadmastare', name: 'Arkadmästare', emoji: '🕹️', type: 'arcade', need: 13, color: '#ffb300' },   // hitta alla 13 hemliga minispel i husen
+  { id: 'godisjagare', name: 'Godisjägare', emoji: '🍬', type: 'ghosts', need: 10, color: '#ff6eb4' },   // fånga 10 spöken (Halloween)
   { id: 'spokfangare', name: 'Spökfångare', emoji: '👻', type: 'ghosts', need: 31, color: '#8e44ad' },   // fånga 31 spöken (Halloween)
   { id: 'universum',name: 'Universum',emoji: '🌠', type: 'clear', need: 1,    color: '#fdcb6e' },
 ];
@@ -561,6 +562,9 @@ const SECRET_HOUSE = { id: 'odehuset', name: 'Ödehuset', angle: 135, dist: 57, 
 
 /* ---- Nyheter / versionslogg (nyast först) ---- */
 const CHANGELOG = [
+  { version: '1.8.1', date: '2026-10-12', items: [
+    'Nytt märke: 🍬 Godisjägare – fånga 10 spöken under Halloween! (Spökfångare kommer fortfarande vid 31.)',
+  ]},
   { version: '1.8.0', date: '2026-10-11', items: [
     '🎃 Halloween! Ön och månen har fått pumpalyktor, spindelnät och en mysig skymningshimmel.',
     '👻 Söta spöken flyger runt – både lågt och jättehögt. Hoppa in i ett spöke för att fånga det: det ger plushopp (+5 gånger dina hopp per tryck)! Ju högre du hoppar, desto fler spöken når du. Nya spöken dyker upp hela tiden.',
