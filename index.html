@@ -356,7 +356,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
 const GAME = {
   name: 'Neos Hoppspel',
-  version: '1.8.1',
+  version: '1.8.2',
   saveKey: 'neos-hoppspel-save-v1',
   goal: 1e12,               // 1 biljon hopp = spelet klarat
   teleportHeight: 20,       // meter över marken innan "Teleportera" visas
@@ -496,6 +496,7 @@ const SEASON = {
 const LEVELS = [
   { name: 'Nybörjarhoppare', need: 0 },
   { name: 'Studsare',        need: 100 },
+  { name: 'Pumpahoppare',    need: 5e3 },   // Halloween-nivå mellan Studsare och Trädtoppshoppare
   { name: 'Trädtoppshoppare',need: 1e4 },
   { name: 'Takhoppare',      need: 1e5 },
   { name: 'Molnhoppare',     need: 1e6 },
@@ -562,6 +563,9 @@ const SECRET_HOUSE = { id: 'odehuset', name: 'Ödehuset', angle: 135, dist: 57, 
 
 /* ---- Nyheter / versionslogg (nyast först) ---- */
 const CHANGELOG = [
+  { version: '1.8.2', date: '2026-10-13', items: [
+    'Ny nivå: 🎃 Pumpahoppare – du når den när du har hoppat 5 000 hopp (mellan Studsare och Trädtoppshoppare)!',
+  ]},
   { version: '1.8.1', date: '2026-10-12', items: [
     'Nytt märke: 🍬 Godisjägare – fånga 10 spöken under Halloween! (Spökfångare kommer fortfarande vid 31.)',
   ]},
@@ -1352,7 +1356,9 @@ let S;
 function sanitize(o) {
   const st = Object.assign({}, DEFAULT_STATE, o || {});
   for (const k of ['jumps', 'money', 'presses', 'up', 'stilt', 'level', 'best', 'bestCombo', 'airJumps', 'purchases']) { st[k] = Number(st[k]); if (!isFinite(st[k]) || st[k] < 0) st[k] = 0; }
-  st.up = Math.min(Math.floor(st.up), ECON.maxUpgrades); st.stilt = Math.min(Math.floor(st.stilt), STILTS.length); st.level = Math.min(Math.floor(st.level), LEVELS.length - 1);
+  st.up = Math.min(Math.floor(st.up), ECON.maxUpgrades); st.stilt = Math.min(Math.floor(st.stilt), STILTS.length);
+  // nivå räknas alltid från hopp (så nya nivåer mitt i listan inte ger falskt "Ny nivå"-popup)
+  let lvl = 0; LEVELS.forEach((l, i) => { if (st.jumps >= l.need) lvl = i; }); st.level = lvl;
   st.badges = Array.isArray(st.badges) ? st.badges.filter((x) => typeof x === 'string') : [];
   st.secrets = Array.isArray(st.secrets) ? st.secrets.filter((x) => typeof x === 'string') : [];
   st.vsWins = Object.assign({ bot: 0, online: 0 }, st.vsWins && typeof st.vsWins === 'object' ? st.vsWins : {});
