@@ -8,4 +8,4 @@ Ett 3D-hoppspel för Neo: hoppa, tjäna pengar, köp uppgraderingar, hitta hemli
 - Lägg till på hemskärmen (iPhone: Dela → "Lägg till på hemskärmen", Android: "Installera app") för helskärm med egen ikon.
 - Sparningen ligger i webbläsaren på den här adressen. Flytta sparning mellan enheter med 💾 Spara (fil) och 📂 Ladda sparfil.
 
-Version 1.8.2. Det här repot innehåller bara den färdiga webbappen (byggs med `node build.js`, publiceras med `deploy.sh`).
+Version 1.8.3. Det här repot innehåller bara den färdiga webbappen (byggs med `node build.js`, publiceras med `deploy.sh`).

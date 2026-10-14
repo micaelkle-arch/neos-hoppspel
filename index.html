@@ -356,7 +356,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
 const GAME = {
   name: 'Neos Hoppspel',
-  version: '1.8.2',
+  version: '1.8.3',
   saveKey: 'neos-hoppspel-save-v1',
   goal: 1e12,               // 1 biljon hopp = spelet klarat
   teleportHeight: 20,       // meter över marken innan "Teleportera" visas
@@ -563,7 +563,10 @@ const SECRET_HOUSE = { id: 'odehuset', name: 'Ödehuset', angle: 135, dist: 57, 
 
 /* ---- Nyheter / versionslogg (nyast först) ---- */
 const CHANGELOG = [
-  { version: '1.8.2', date: '2026-10-13', items: [
+  { version: '1.8.3', date: '2026-10-14', items: [
+    '🦇 Fladdermöss! Små söta fladdermöss flaxar runt toppen av Fyren och runt det hemliga Ödehuset. Hoppa högt och titta upp!',
+  ]},
+  { version: '1.8.3', date: '2026-10-13', items: [
     'Ny nivå: 🎃 Pumpahoppare – du når den när du har hoppat 5 000 hopp (mellan Studsare och Trädtoppshoppare)!',
   ]},
   { version: '1.8.1', date: '2026-10-12', items: [
@@ -1141,6 +1144,14 @@ function hwShared() {
       if (!corner) { const a = ang[0], pa = ang[ang.length - 1], m = (pa + Math.PI * 2 + a) / 2, sag = rr * 0.86; x.quadraticCurveTo(cx + Math.cos(m) * sag, cy + Math.sin(m) * sag, cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); }
       x.stroke(); }
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  // fladdermus (1.8.3): rund kropp med öron + vinge (höger; vänster = spegling). Framsidan är +z, vingen pekar åt +x.
+  const batBody = hwMerge([hwPlace(new THREE.SphereGeometry(0.14, 12, 9), 0, 0, 0, 1, 0.9, 1.3),
+    hwPlace(new THREE.ConeGeometry(0.05, 0.12, 6), -0.07, 0.15, 0.06, 1, 1, 1, 0, 0, 0.25),
+    hwPlace(new THREE.ConeGeometry(0.05, 0.12, 6), 0.07, 0.15, 0.06, 1, 1, 1, 0, 0, -0.25)]);
+  const batEyes = hwMerge([hwPlace(new THREE.SphereGeometry(0.03, 8, 6), -0.05, 0.05, 0.16, 1, 1, 0.7), hwPlace(new THREE.SphereGeometry(0.03, 8, 6), 0.05, 0.05, 0.16, 1, 1, 0.7)]);
+  const ws = new THREE.Shape(); ws.moveTo(0.06, 0.1); ws.lineTo(0.36, 0.17); ws.lineTo(0.72, 0.1); ws.lineTo(0.62, -0.06);
+  ws.quadraticCurveTo(0.56, 0.0, 0.48, -0.04); ws.quadraticCurveTo(0.42, 0.04, 0.32, -0.08); ws.quadraticCurveTo(0.24, 0.0, 0.16, -0.06); ws.lineTo(0.06, -0.08); ws.closePath();
+  const batWing = new THREE.ShapeGeometry(ws); batWing.rotateX(Math.PI / 2);
   const webMat = (tex) => new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0.85, polygonOffset: true, polygonOffsetFactor: -2 });
   HWG = {
     ghostBody, ghostEyes, ghostCheeks, spiderBody, spiderEyes, spiderPupils, pumpkin: pg, stem, face,
@@ -1150,6 +1161,10 @@ function hwShared() {
     mPumpkin: mat('#ff8c1a', { roughness: 0.6, emissive: C('#7a2e00'), emissiveIntensity: 0.25 }), mStem: mat('#4e7d2a'),
     mFace: new THREE.MeshBasicMaterial({ map: faceTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
     mWeb: webMat(webTex(false)), mWebCorner: webMat(webTex(true)),
+    batBody, batEyes, batWing,
+    mBat: mat('#4a3566', { roughness: 0.6, emissive: C('#2a1640'), emissiveIntensity: 0.35 }),
+    mBatWing: mat('#6b4c8f', { roughness: 0.7, emissive: C('#2a1640'), emissiveIntensity: 0.3, side: THREE.DoubleSide }),
+    mBatEyes: new THREE.MeshBasicMaterial({ color: C('#ffe066') }),
   };
   return HWG;
 }
@@ -1225,9 +1240,20 @@ function hwBuild(w) {
   const addPlanes = (list, m) => { if (!list.length) return null; const im = new THREE.InstancedMesh(plane, m, list.length);
     list.forEach((p, i) => { e.set(p[3], p[4], p[5], 'YXZ'); if (p[3]) e.set(p[3], 0, p[5], 'XYZ'); q.setFromEuler(e); m4.compose(v.set(p[0], p[1], p[2]), q, sc.set(p[6], p[7], 1)); im.setMatrixAt(i, m4); });
     im.instanceMatrix.needsUpdate = true; im.renderOrder = 2; group.add(im); return im; };
+  // --- fladdermöss (1.8.3, bara pynt): flockar som cirklar runt fyrtoppen och Ödehuset ---
+  W.bats = [];
+  if (w === 'island') {
+    const flocks = [];
+    const fyr = BUILDINGS.find((b) => b.shape === 'tower'); if (fyr && fyr.x !== undefined) flocks.push({ x: fyr.x, z: fyr.z, y: fyr.h + 1.5, r: 3.2, n: 7, spread: 3 });
+    const sa = SECRET_HOUSE.angle * Math.PI / 180; flocks.push({ x: Math.sin(sa) * SECRET_HOUSE.dist, z: Math.cos(sa) * SECRET_HOUSE.dist, y: 4.6, r: 2.6, n: 5, spread: 1.6 });
+    for (const f of flocks) for (let i = 0; i < f.n; i++) W.bats.push({ cx: f.x, cz: f.z, cy: ground(f.x, f.z) + f.y + r() * f.spread, rr: f.r * (0.7 + r() * 0.6),
+      w: (0.7 + r() * 0.5) * (i % 3 === 2 ? -1 : 1), a: i / f.n * 6.28 + r() * 0.6, phase: r() * 6.28, flap: 10 + r() * 4, s: 0.95 + r() * 0.35, x: f.x, y: 0, z: f.z }); }
+  if (W.bats.length) { const n = W.bats.length;
+    W.bBody = hwInst(G.batBody, G.mBat, n, group); W.bEyes = hwInst(G.batEyes, G.mBatEyes, n, group);
+    W.bWingR = hwInst(G.batWing, G.mBatWing, n, group); W.bWingL = hwInst(G.batWing, G.mBatWing, n, group); }
   W.webs = addPlanes(webs, G.mWeb); W.cornerWebs = addPlanes(corners, G.mWebCorner);
   W.webCount = webs.length + corners.length;
-  hwDrawGhosts(W, 0); hwDrawSpiders(W, 0);
+  hwDrawGhosts(W, 0); hwDrawSpiders(W, 0); hwDrawBats(W, 0);
   HW.worlds[w] = W; return W;
 }
 function hwGhostSpot(W, g, r) {
@@ -1256,6 +1282,22 @@ function hwDrawSpiders(W, t) {
     W.sBody.setMatrixAt(i, _hm); W.sEyes.setMatrixAt(i, _hm); W.sPupils.setMatrixAt(i, _hm);
   });
   W.sBody.instanceMatrix.needsUpdate = W.sEyes.instanceMatrix.needsUpdate = W.sPupils.instanceMatrix.needsUpdate = true;
+}
+const _hb = new THREE.Matrix4(), _hr = new THREE.Matrix4(), _hmir = new THREE.Matrix4().makeScale(-1, 1, 1);
+function hwDrawBats(W, t) {   // fladdermöss: flyger i cirklar, guppar och flaxar med vingarna
+  if (!W.bats || !W.bats.length) return;
+  W.bats.forEach((b, i) => {
+    const a = b.a + t * b.w * 0.55;
+    b.x = b.cx + Math.sin(a) * b.rr; b.z = b.cz + Math.cos(a) * b.rr; b.y = b.cy + Math.sin(t * 2.1 + b.phase) * 0.45;
+    const yaw = Math.atan2(Math.cos(a) * b.w, -Math.sin(a) * b.w);
+    _he.set(Math.sin(t * 2.1 + b.phase) * -0.15, yaw, b.w > 0 ? -0.3 : 0.3); _hq.setFromEuler(_he);
+    _hm.compose(_hv.set(b.x, b.y, b.z), _hq, _hs.set(b.s, b.s, b.s));
+    W.bBody.setMatrixAt(i, _hm); W.bEyes.setMatrixAt(i, _hm);
+    b.wing = Math.sin(t * b.flap + b.phase) * 0.75 + 0.1;
+    _hr.makeRotationZ(b.wing); _hb.multiplyMatrices(_hm, _hr); W.bWingR.setMatrixAt(i, _hb);
+    _hb.multiplyMatrices(_hm, _hmir).multiply(_hr); W.bWingL.setMatrixAt(i, _hb);
+  });
+  W.bBody.instanceMatrix.needsUpdate = W.bEyes.instanceMatrix.needsUpdate = W.bWingR.instanceMatrix.needsUpdate = W.bWingL.instanceMatrix.needsUpdate = true;
 }
 function hwUpdate(dt, t) {
   HW.checkT -= dt; if (HW.checkT <= 0) { HW.checkT = 30; if (hwWanted() !== HW.on) hwApply(); }
@@ -1288,6 +1330,7 @@ function hwUpdate(dt, t) {
     }
   }
   hwDrawSpiders(W, t);
+  hwDrawBats(W, t);
 }
 function hwReward() { return Math.max(1, gainPerJump()) * SEASON.halloween.rewardPresses; }
 function hwCatch(W, g) {
