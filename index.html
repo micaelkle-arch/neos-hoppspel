@@ -356,7 +356,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
 const GAME = {
   name: 'Neos Hoppspel',
-  version: '1.8.3',
+  version: '1.9.0',
   saveKey: 'neos-hoppspel-save-v1',
   goal: 1e12,               // 1 biljon hopp = spelet klarat
   teleportHeight: 20,       // meter över marken innan "Teleportera" visas
@@ -364,36 +364,39 @@ const GAME = {
 
 /* ---- Utseende (byt här när moodboarden kommer) ---- */
 const STYLE = {
-  exposure: 1.05,           // tonmappning (ACES) – högre = ljusare
-  skyTop: '#2f8cff',
-  skyHorizon: '#9fe0ff',
-  skyHigh: '#1f5fd6',
+  exposure: 1.0,            // tonmappning (ACES) – högre = ljusare
+  skyTop: '#0d84a0',
+  skyHorizon: '#86e6df',
+  skyHigh: '#0f6a86',
   space: '#05041a',
-  fogNear: 110, fogFar: 520,
-  hemiSky: '#cfeaff', hemiGround: '#6fbf3a',
-  sun: '#fff2d9',
-  sea: '#1597ff',
-  seaLight: '#5cc2ff',
-  shallow: '#3fe0f0',
-  sand: '#ffe08a', sandDot: '#f2c75c',
-  grass: '#4fd23a', grass2: '#3cbb2c',      // rutigt gräs
-  plaza: '#fff1c9', plaza2: '#ffc864', plazaRim: '#ff8a3d',
-  path: '#ffe7a8', path2: '#f6b75b',        // rutiga gångar
-  stone: '#c9ccd6', stoneDark: '#9aa0b0',
-  treeLeaf: ['#2fc23d', '#5fe04a', '#1fa83a'],
-  treeTrunk: '#9b5a2a',
-  rock: '#a7b0bd',
+  fogNear: 70, fogFar: 430,
+  hemiSky: '#c4f0ea', hemiGround: '#c8925a',
+  sun: '#ffd69c',
+  sea: '#13a7b5',
+  seaLight: '#4fd8d2',
+  shallow: '#5fe8d8',
+  sand: '#f1c88e', sandDot: '#e0ae72',
+  grass: '#efc690', grass2: '#e1b27a',      // varm sandig mark (prickig)
+  plaza: '#f3d3a2', plaza2: '#dfb57f', plazaRim: '#b8946c',
+  path: '#ecc996', path2: '#d2a46e',        // kullerstensgångar
+  stone: '#cfc2ac', stoneDark: '#a8947a',
+  treeLeaf: ['#3f8f3a', '#5aa63e', '#2f7a45'],
+  treeTrunk: '#8a5a3a',
+  rock: '#b9a891',
   flowers: ['#ff3b5c', '#ffd400', '#ff7bd5', '#ffffff', '#7a5cff'],
   cloud: '#ffffff',
   player: '#ff2a2a',        // huvudet = den röda triangeln
   playerEye: '#ffffff',
   charShirt: '#ff3b3b', charPants: '#2357ff', charSkin: '#ffd2a6', charShoe: '#7a3b12', charGlove: '#ffffff',
   stilt: '#ffb300',
-  door: '#8a4b20',
-  window: '#9fe6ff',
+  door: '#7a4a2a',
+  window: '#5aa9b8',
   moonGround: '#c9c9cf',
   moonCrater: '#a6a6ae',
   earth: '#2f7fe0',
+  // 1.9.0 stil: putsade kolonialhus (fasad, tak, list, fönsterluckor, smide, rankor)
+  trim: '#f3e6cc', iron: '#2c2a30', vine: '#4f8f3a', palmLeaf: '#5c9e3a', palmTrunk: '#a07a4e', agave: ['#9aa63a', '#b7a94a', '#7f9a3c'],
+  wood: '#a77b52', woodDark: '#6e4a2f', cliff: '#bba78e', cliffDark: '#9c8a73', shutters: ['#3f7f6a', '#2f6f9f', '#3f8f8a', '#7a5a9a'],
   oldWood: '#8d8579', oldWood2: '#4f4840', oldFloor: '#6e5a45', oldRoof: '#5b5560', catFur: '#ff9a3c',
   // rullande kullar: vinkel (grader), avstånd från mitten, radie, höjd
   hills: [
@@ -514,20 +517,20 @@ const LEVELS = [
    inside: vilken inredning huset får när man kan gå in (se INTERIORS i game.js). Utan inside = enkel standardinredning.
    walkIn: false = huset går aldrig att gå in i. Tornet (Fyren) går inte att gå in i. */
 const BUILDINGS = [
-  { name: 'Hoppbutiken',          shop: 'jumps',    angle: 180, dist: 25, w: 9,  d: 7, h: 5,  color: '#ff5a4f', roofColor: '#e8141e', roof: 'flat', inside: 'shop_jumps' },
-  { name: 'Uppgraderingsverkstan',shop: 'upgrades', angle: 300, dist: 25, w: 9,  d: 7, h: 6,  color: '#4fb0ff', roofColor: '#0a6cff', roof: 'flat', inside: 'shop_upgrades' },
-  { name: 'Styltaffären',         shop: 'stilts',   angle: 60,  dist: 25, w: 8,  d: 7, h: 5,  color: '#ffe45c', roofColor: '#ff9f1a', roof: 'flat', inside: 'shop_stilts' },
-  { name: 'Neos hus',      angle: 0,   dist: 27, w: 7, d: 6, h: 4,  color: '#ffb08a', roofColor: '#ff4f1f', roof: 'pyramid', info: 'Hemma hos Neo! Här finns en studsmatta i vardagsrummet.', inside: 'home' },
-  { name: 'Bageriet',      angle: 30,  dist: 28, w: 6, d: 6, h: 4,  color: '#fff0c2', roofColor: '#c46a1c', roof: 'pyramid', info: 'Det luktar nybakade kanelbullar! 🥐', inside: 'bakery' },
-  { name: 'Skolan',        angle: 90,  dist: 29, w: 11,d: 7, h: 7,  color: '#ffc06b', roofColor: '#d6114b', roof: 'flat', info: 'I skolan lär man sig räkna till en biljon.', inside: 'school' },
-  { name: 'Biblioteket',   angle: 120, dist: 28, w: 7, d: 6, h: 5,  color: '#b4fff2', roofColor: '#00b3a4', roof: 'pyramid', info: 'Boken "Hoppa högre" är utlånad. Igen.', inside: 'library' },
-  { name: 'Glassbaren',    angle: 150, dist: 27, w: 5, d: 5, h: 3.5,color: '#ff7ac0', roofColor: '#ff1f8e', roof: 'pyramid', info: 'Dagens smak: Raketjordgubb 🍓🚀', inside: 'icecream' },
-  { name: 'Rådhuset',      angle: 210, dist: 29, w: 10,d: 8, h: 8,  color: '#f4f1ea', roofColor: '#3a62d6', roof: 'pyramid', info: 'Borgmästaren säger: "Välkommen till Hoppön!"', inside: 'townhall' },
-  { name: 'Brandstationen',angle: 240, dist: 28, w: 8, d: 7, h: 5,  color: '#ff3d2e', roofColor: '#b3141a', roof: 'flat', info: 'Brandbilen är tvättad och glänser.', inside: 'firestation' },
-  { name: 'Blomsteraffären',angle: 270,dist: 27, w: 6, d: 5, h: 3.5,color: '#c6ff4d', roofColor: '#2fbf3a', roof: 'pyramid', info: 'Här säljs blommor som växer när man hoppar.', inside: 'flowers' },
-  { name: 'Leksaksaffären',angle: 330, dist: 27, w: 6, d: 6, h: 4,  color: '#b18cff', roofColor: '#7a3dff', roof: 'pyramid', info: 'Hyllorna är fulla av studsbollar!', inside: 'toys' },
-  { name: 'Studsmattehallen', angle: 255, dist: 42, w: 8, d: 7, h: 5, color: '#7ae7ff', roofColor: '#ff8a00', roof: 'pyramid', info: 'Välkommen in! Tio studsmattor på rad – Neo har provat alla! 🤸 Rekordet här inne är 47 hopp i rad – kan du slå det?', inside: 'trampolines' },
-  { name: 'Fyren',  x: 52, z: 34, w: 4, d: 4, h: 16, color: '#ffffff', roofColor: '#ff2a2a', roof: 'flat', shape: 'tower', info: 'Från fyren ser man hela Hoppön.' },
+  { name: 'Hoppbutiken',          shop: 'jumps',    angle: 180, dist: 25, w: 9,  d: 7, h: 5,  color: '#e0784a', roofColor: '#b5522f', roof: 'flat', inside: 'shop_jumps' },
+  { name: 'Uppgraderingsverkstan',shop: 'upgrades', angle: 300, dist: 25, w: 9,  d: 7, h: 6,  color: '#3f8fc4', roofColor: '#b85a35', roof: 'flat', inside: 'shop_upgrades' },
+  { name: 'Styltaffären',         shop: 'stilts',   angle: 60,  dist: 25, w: 8,  d: 7, h: 5,  color: '#f2c35c', roofColor: '#c0603a', roof: 'flat', inside: 'shop_stilts' },
+  { name: 'Neos hus',      angle: 0,   dist: 27, w: 7, d: 6, h: 4,  color: '#f0a77a', roofColor: '#c4532e', roof: 'pyramid', info: 'Hemma hos Neo! Här finns en studsmatta i vardagsrummet.', inside: 'home' },
+  { name: 'Bageriet',      angle: 30,  dist: 28, w: 6, d: 6, h: 4,  color: '#f3e2bf', roofColor: '#c46a3a', roof: 'pyramid', info: 'Det luktar nybakade kanelbullar! 🥐', inside: 'bakery' },
+  { name: 'Skolan',        angle: 90,  dist: 29, w: 11,d: 7, h: 7,  color: '#ee9a4a', roofColor: '#b8502d', roof: 'flat', info: 'I skolan lär man sig räkna till en biljon.', inside: 'school' },
+  { name: 'Biblioteket',   angle: 120, dist: 28, w: 7, d: 6, h: 5,  color: '#4fb3b0', roofColor: '#c46a3a', roof: 'pyramid', info: 'Boken "Hoppa högre" är utlånad. Igen.', inside: 'library' },
+  { name: 'Glassbaren',    angle: 150, dist: 27, w: 5, d: 5, h: 3.5,color: '#ef8fa6', roofColor: '#b85a35', roof: 'pyramid', info: 'Dagens smak: Raketjordgubb 🍓🚀', inside: 'icecream' },
+  { name: 'Rådhuset',      angle: 210, dist: 29, w: 10,d: 8, h: 8,  color: '#f1e9d8', roofColor: '#c4532e', roof: 'pyramid', info: 'Borgmästaren säger: "Välkommen till Hoppön!"', inside: 'townhall' },
+  { name: 'Brandstationen',angle: 240, dist: 28, w: 8, d: 7, h: 5,  color: '#d9553f', roofColor: '#8f3a26', roof: 'flat', info: 'Brandbilen är tvättad och glänser.', inside: 'firestation' },
+  { name: 'Blomsteraffären',angle: 270,dist: 27, w: 6, d: 5, h: 3.5,color: '#9cc96a', roofColor: '#c46a3a', roof: 'pyramid', info: 'Här säljs blommor som växer när man hoppar.', inside: 'flowers' },
+  { name: 'Leksaksaffären',angle: 330, dist: 27, w: 6, d: 6, h: 4,  color: '#7f86d6', roofColor: '#b85a35', roof: 'pyramid', info: 'Hyllorna är fulla av studsbollar!', inside: 'toys' },
+  { name: 'Studsmattehallen', angle: 255, dist: 42, w: 8, d: 7, h: 5, color: '#5fc3d6', roofColor: '#d07a35', roof: 'pyramid', info: 'Välkommen in! Tio studsmattor på rad – Neo har provat alla! 🤸 Rekordet här inne är 47 hopp i rad – kan du slå det?', inside: 'trampolines' },
+  { name: 'Fyren',  x: 52, z: 34, w: 4, d: 4, h: 16, color: '#f4efe4', roofColor: '#c4532e', roof: 'flat', shape: 'tower', info: 'Från fyren ser man hela Hoppön.' },
 ];
 
 /* ---- Lägen: Mot bot & Två spelare (egna rundor, påverkar inte huvudspelet) ---- */
@@ -563,6 +566,14 @@ const SECRET_HOUSE = { id: 'odehuset', name: 'Ödehuset', angle: 135, dist: 57, 
 
 /* ---- Nyheter / versionslogg (nyast först) ---- */
 const CHANGELOG = [
+  { version: '1.9.0', date: '2026-10-14', items: [
+    '🎨 Hoppön har fått ett helt nytt utseende! Husen ser ut som i en varm hamnstad: färgglada väggar, tak av tegel, runda fönster med luckor, balkonger och gröna rankor.',
+    '⚓ Nere vid fyren finns en hamn med bryggor, båtar som guppar och en lyftkran. Ute i havet står stora klippor.',
+    '🌴 Palmer, taggiga växter, bänkar, tunnor, lådor och två marknadsstånd. Fontänen på torget är hög och har tre våningar med vatten.',
+    '☀️ Varm sol med långa skuggor och en turkos himmel. Allt ser ut att vara byggt av små platta bitar – även du!',
+    '⚙️ Ny inställning i Menyn: 🎨 Grafik (Auto, Hög eller Låg). Välj Låg om spelet går långsamt på en gammal telefon.',
+    'Allt annat är som förut: butikerna, husen du kan gå in i, hemligheterna, spökena och månen.',
+  ]},
   { version: '1.8.3', date: '2026-10-14', items: [
     '🦇 Fladdermöss! Små söta fladdermöss flaxar runt toppen av Fyren och runt det hemliga Ödehuset. Hoppa högt och titta upp!',
   ]},
@@ -1394,7 +1405,7 @@ function fmtM(m) { return m < 10 ? m.toFixed(1).replace('.', ',') + ' m' : fmt(m
 /* ================= Sparning ================= */
 const DEFAULT_STATE = { jumps: 0, money: 0, presses: 0, up: 0, stilt: 0, badges: [], level: 0,
   cleared: false, infinite: false, seenVersion: '', muted: false, best: 0, tipAir: false, secrets: [],
-  bestCombo: 0, airJumps: 0, purchases: 0, pos: null, savedAt: 0, vsWins: null, jumpKey: 'Space', arcade: null, halloween: null };
+  bestCombo: 0, airJumps: 0, purchases: 0, pos: null, savedAt: 0, vsWins: null, jumpKey: 'Space', arcade: null, halloween: null, gfx: 'auto' };
 let S;
 function sanitize(o) {
   const st = Object.assign({}, DEFAULT_STATE, o || {});
@@ -1413,6 +1424,7 @@ function sanitize(o) {
   // Halloween (1.8.0): läge auto/på/av + antal fångade spöken
   const hw = st.halloween && typeof st.halloween === 'object' ? st.halloween : {};
   st.halloween = { mode: ['auto', 'on', 'off'].includes(hw.mode) ? hw.mode : 'auto', ghosts: isFinite(Number(hw.ghosts)) && Number(hw.ghosts) > 0 ? Math.floor(Number(hw.ghosts)) : 0 };
+  st.gfx = ['auto', 'hog', 'lag'].includes(st.gfx) ? st.gfx : 'auto';   // ⚙️ Grafik (1.9.0)
   st.pos = st.pos && typeof st.pos === 'object' && isFinite(st.pos.x) && isFinite(st.pos.z) ? st.pos : null;
   return st;
 }
@@ -1470,9 +1482,14 @@ const sfx = {
 
 /* ================= Three.js grund ================= */
 const canvas = $('c');
-const LOWGFX = /[?&]grafik=lag/.test(location.search);   // enklare grafik för långsamma enheter/tester
+/* Grafiknivå (1.9.0): ⚙️ Meny → Grafik: Auto / Hög / Låg. ?grafik=lag (tester, långsamma enheter) och ?grafik=hog tvingar.
+   Auto = Låg på telefoner/surfplattor och svaga datorer, annars Hög. Byte laddar om sidan. */
+const GFX_AUTO_LOW = (() => { try { return matchMedia('(pointer: coarse)').matches || Math.min(screen.width, screen.height) < 600 || (navigator.deviceMemory && navigator.deviceMemory < 4); } catch (e) { return false; } })();
+const GFX = /[?&]grafik=lag/.test(location.search) ? 'lag' : /[?&]grafik=hog/.test(location.search) ? 'hog' : S.gfx === 'hog' || S.gfx === 'lag' ? S.gfx : (GFX_AUTO_LOW ? 'lag' : 'hog');
+const LOWGFX = GFX === 'lag';   // enklare grafik för långsamma enheter/tester
+document.body.classList.toggle('gfx-hog', !LOWGFX);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(LOWGFX ? 1 : Math.min(window.devicePixelRatio || 1, 2));
+renderer.setPixelRatio(LOWGFX ? Math.min(window.devicePixelRatio || 1, GFX_AUTO_LOW && !/[?&]grafik=lag/.test(location.search) ? 1.5 : 1) : Math.min(window.devicePixelRatio || 1, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = STYLE.exposure || 1.05;
@@ -1483,7 +1500,7 @@ const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 60000);
 function resize() { const w = window.innerWidth, h = window.innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 window.addEventListener('resize', resize); resize();
 
-const mat = (color, extra) => new THREE.MeshStandardMaterial(Object.assign({ color: C(color), roughness: 0.7, metalness: 0 }, extra || {}));
+const mat = (color, extra) => new THREE.MeshStandardMaterial(Object.assign({ color: C(color), roughness: 0.8, metalness: 0, flatShading: true }, extra || {}));   // 1.9.0: fasetterad low-poly-stil
 const flat = (color, extra) => mat(color, Object.assign({ flatShading: true }, extra || {}));
 function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function textTexture(lines, o) {
@@ -1512,6 +1529,12 @@ function patternTexture(kind, a, b, repeat) {
   else if (kind === 'waves') { x.strokeStyle = b; x.lineWidth = 6; for (let j = 0; j < 4; j++) { x.beginPath(); for (let i = 0; i <= s; i += 8) { const y = j * 64 + 32 + Math.sin(i / s * Math.PI * 4) * 8; i ? x.lineTo(i, y) : x.moveTo(i, y); } x.stroke(); } }
   else if (kind === 'planks') { const r = rng(11), n = 6, q = s / n; for (let i = 0; i < n; i++) { x.fillStyle = r() < 0.4 ? b : a; x.globalAlpha = 0.35 + r() * 0.3; x.fillRect(i * q, 0, q, s); x.globalAlpha = 1;
       x.fillStyle = b; x.fillRect(i * q, 0, 4, s); for (let k = 0; k < 3; k++) { x.fillRect(i * q + 8 + r() * (q - 16), r() * s, 2, 30 + r() * 60); } x.beginPath(); x.arc(i * q + q / 2, r() * s, 4, 0, 6.3); x.fill(); } }
+  else if (kind === 'stripes') { const n = 8, q = s / n; for (let i = 0; i < n; i += 2) x.fillRect(i * q, 0, q, s); }
+  else if (kind === 'rooftiles') { const r = rng(3), rows = 8, h = s / rows; for (let j = 0; j < rows; j++) { x.fillStyle = b; x.globalAlpha = 0.55; x.fillRect(0, j * h + h - 6, s, 6); x.globalAlpha = 0.25 + r() * 0.2;
+      for (let i = 0; i < 8; i++) { x.fillRect(i * s / 8 + (j % 2) * s / 16, j * h, 3, h); } x.globalAlpha = 1; } }
+  else if (kind === 'flags') { const r = rng(9); x.strokeStyle = b; x.lineWidth = 4; for (let j = 0; j < 5; j++) { const y = j * s / 5, off = r() * 40; x.beginPath(); x.moveTo(0, y); x.lineTo(s, y); x.stroke();
+      for (let i = 0; i < 4; i++) { const xx = (i * s / 4 + off) % s; x.beginPath(); x.moveTo(xx, y); x.lineTo(xx, y + s / 5); x.stroke(); } }
+      x.globalAlpha = 0.18; for (let i = 0; i < 40; i++) { x.fillRect(r() * s, r() * s, 6 + r() * 20, 6 + r() * 14); } x.globalAlpha = 1; }
   else if (kind === 'bricks') { x.fillStyle = b; const h = s / 8; for (let j = 0; j < 8; j++) { x.fillRect(0, j * h, s, 3); const off = j % 2 ? s / 4 : 0; for (let i = 0; i < 3; i++) x.fillRect(off + i * s / 2, j * h, 3, h); } }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(repeat || 1, repeat || 1); t.anisotropy = MAX_ANISO; return t;
@@ -1533,8 +1556,8 @@ function roundedBox(w, h, d, r, seg) {
 const island = new THREE.Scene();
 island.background = C(STYLE.skyHorizon);
 island.fog = new THREE.Fog(C(STYLE.skyHorizon), STYLE.fogNear, STYLE.fogFar);
-const hemi = new THREE.HemisphereLight(C(STYLE.hemiSky), C(STYLE.hemiGround), 1.1); island.add(hemi);
-const sun = new THREE.DirectionalLight(C(STYLE.sun), 2.4);
+const hemi = new THREE.HemisphereLight(C(STYLE.hemiSky), C(STYLE.hemiGround), 0.85); island.add(hemi);
+const sun = new THREE.DirectionalLight(C(STYLE.sun), 3.1);   // 1.9.0: varmare, lägre sol = längre skuggor
 sun.castShadow = true; sun.shadow.mapSize.set(LOWGFX ? 1024 : 4096, LOWGFX ? 1024 : 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
 Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 300 });
 island.add(sun); island.add(sun.target);
@@ -1553,14 +1576,14 @@ const sea = new THREE.Mesh(new THREE.CircleGeometry(6000, 64), mat(STYLE.sea, { 
 sea.rotation.x = -Math.PI / 2; sea.position.y = -0.8; sea.receiveShadow = true; island.add(sea);
 const shallow = new THREE.Mesh(new THREE.RingGeometry(R + 4, R + 22, 64), mat(STYLE.shallow, { transparent: true, opacity: 0.75, roughness: 0.3 }));
 shallow.rotation.x = -Math.PI / 2; shallow.position.y = -0.7; island.add(shallow);
-const sandM = new THREE.Mesh(new THREE.CylinderGeometry(R + 4, R + 10, 2.4, 64), mat(STYLE.sand, { map: patternTexture('dots', STYLE.sand, STYLE.sandDot, 12) }));
+const sandM = new THREE.Mesh(new THREE.CylinderGeometry(R + 4, R + 10, 2.4, 64), mat(STYLE.sand, { map: patternTexture('dots', STYLE.sand, STYLE.sandDot, 40) }));
 sandM.position.y = -1.2; sandM.receiveShadow = true; island.add(sandM);
-const grassTex = patternTexture('checker', STYLE.grass, STYLE.grass2, 16);
+const grassTex = patternTexture('dots', STYLE.grass, STYLE.grass2, 22);
 const grassM = new THREE.Mesh(new THREE.CircleGeometry(R - 5, 64), mat(STYLE.grass, { map: grassTex, color: 0xffffff }));
 grassM.rotation.x = -Math.PI / 2; grassM.position.y = 0.01; grassM.receiveShadow = true; island.add(grassM);
-const plaza = new THREE.Mesh(new THREE.CircleGeometry(14, 48), mat('#ffffff', { map: patternTexture('checker', STYLE.plaza, STYLE.plaza2, 7) }));
+const plaza = new THREE.Mesh(new THREE.CircleGeometry(14, 48), mat('#ffffff', { map: patternTexture('flags', STYLE.plaza, STYLE.plaza2, 6) }));
 plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.03; plaza.receiveShadow = true; island.add(plaza);
-const plazaRim = new THREE.Mesh(new THREE.TorusGeometry(14, 0.35, 8, 64), mat(STYLE.plazaRim));
+const plazaRim = new THREE.Mesh(new THREE.TorusGeometry(14, 0.35, 5, 40), mat(STYLE.plazaRim));
 plazaRim.rotation.x = -Math.PI / 2; plazaRim.position.y = 0.05; plazaRim.receiveShadow = true; island.add(plazaRim);
 // fontän mitt på torget (låg, går att hoppa upp på)
 const fountain = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.4, 0.6, 24), mat(STYLE.stone));
@@ -1568,6 +1591,18 @@ fountain.position.set(0, 0.3, 0); fountain.castShadow = fountain.receiveShadow =
 const frim = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.18, 8, 32), mat(STYLE.stone)); frim.rotation.x = -Math.PI / 2; frim.position.y = 0.62; island.add(frim);
 const fwater = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.0, 0.1, 24), mat(STYLE.shallow, { roughness: 0.2 }));
 fwater.position.set(0, 0.6, 0); island.add(fwater);
+fountain.geometry = new THREE.CylinderGeometry(2.2, 2.4, 0.6, 12); frim.geometry = new THREE.TorusGeometry(2.2, 0.2, 4, 12); fwater.geometry = new THREE.CylinderGeometry(2.05, 2.05, 0.1, 12);
+// 1.9.0: flera våningar i sten med turkost vatten (pelaren i mitten är fast)
+{ const st = mat(STYLE.stone), wm = mat(STYLE.shallow, { roughness: 0.2, emissive: C('#0f6f6a'), emissiveIntensity: 0.25 });
+  const add = (geo, m, y) => { const o = new THREE.Mesh(geo, m); o.position.y = y; o.castShadow = o.receiveShadow = true; island.add(o); return o; };
+  add(new THREE.CylinderGeometry(0.42, 0.55, 1.4, 8), st, 1.3);
+  add(new THREE.CylinderGeometry(1.35, 0.5, 0.35, 10), st, 2.1); add(new THREE.CylinderGeometry(1.15, 1.15, 0.06, 10), wm, 2.27);
+  add(new THREE.CylinderGeometry(0.28, 0.36, 0.9, 8), st, 2.7);
+  add(new THREE.CylinderGeometry(0.75, 0.3, 0.26, 8), st, 3.2); add(new THREE.CylinderGeometry(0.6, 0.6, 0.05, 8), wm, 3.33);
+  add(new THREE.CylinderGeometry(0.12, 0.2, 0.6, 6), st, 3.6); add(new THREE.OctahedronGeometry(0.22, 0), st, 4.0);
+  // vattenstrålar som faller ner (genomskinliga koner)
+  const fall = mat(STYLE.shallow, { transparent: true, opacity: 0.55, roughness: 0.1 });
+  add(new THREE.CylinderGeometry(0.62, 0.8, 0.95, 8, 1, true), fall, 2.85); add(new THREE.CylinderGeometry(1.2, 1.7, 1.55, 10, 1, true), fall, 1.45); }
 
 /* --- kullar (rullande gräskullar, går att gå på) --- */
 const hills = [];
@@ -1592,7 +1627,7 @@ function terrainH(x, z) {
 // Spelfigurer (du, boten, kompisen) läggs ALDRIG här – figurer krockar inte med varandra utan går rakt igenom
 // varandra. Listan fryses när ön är byggd (se nedan) så att inget kan lägga till figurer i den senare.
 const solids = [];
-const pathTex = patternTexture('checker', STYLE.path, STYLE.path2, 1);
+const pathTex = patternTexture('flags', STYLE.path, STYLE.path2, 1);
 const DOOR_W = 1.8;          // dörröppningens bredd (figuren är 0,9 bred)
 const WALK_HOUSES = [];      // hus som går att gå in i när läget tillåter det (MODE_RULES.walkIn)
 BUILDINGS.forEach((b) => {
@@ -1611,16 +1646,16 @@ BUILDINGS.forEach((b) => {
     const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfff3a0 })); lamp.position.y = b.h + 1; g.add(lamp);
     const cap = new THREE.Mesh(new THREE.ConeGeometry(1.2, 1.2, 16), mat(b.roofColor)); cap.position.y = b.h + 2.3; cap.castShadow = true; g.add(cap);
   } else {
-    const body = new THREE.Mesh(roundedBox(b.w, b.h, b.d, 0.45), mat(b.color));
+    const body = new THREE.Mesh(roundedBox(b.w, b.h, b.d, 0.25, 1), mat(b.color));
     body.position.y = b.h / 2; body.castShadow = body.receiveShadow = true; g.add(body); parts.body = body;
     // sockel
     const base = new THREE.Mesh(roundedBox(b.w + 0.3, 0.6, b.d + 0.3, 0.2), mat(STYLE.stone, { map: patternTexture('bricks', STYLE.stone, STYLE.stoneDark, 1) }));
     base.position.y = 0.3; base.receiveShadow = true; g.add(base); parts.base = base;
-    const slab = new THREE.Mesh(roundedBox(b.w + 0.7, 0.5, b.d + 0.7, 0.22), mat(b.roofColor));
+    const slab = new THREE.Mesh(roundedBox(b.w + 0.7, 0.5, b.d + 0.7, 0.22, 1), mat(b.roofColor));
     slab.position.y = b.h; slab.castShadow = true; slab.receiveShadow = true; g.add(slab); parts.roof.push(slab);
     if (roofH) {
       const pg = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); pg.rotateY(Math.PI / 4);
-      const pyr = new THREE.Mesh(pg, flat(b.roofColor)); pyr.scale.set(b.w + 0.3, roofH, b.d + 0.3);
+      const rt = patternTexture('rooftiles', b.roofColor, '#5a2a18', 1); rt.repeat.set(3, 2); const pyr = new THREE.Mesh(pg, flat('#ffffff', { map: rt })); pyr.scale.set(b.w + 0.3, roofH, b.d + 0.3);
       pyr.position.y = b.h + roofH / 2 + 0.2; pyr.castShadow = true; g.add(pyr); parts.roof.push(pyr);
       const chim = new THREE.Mesh(roundedBox(0.8, 1.6, 0.8, 0.12), mat(STYLE.stone)); chim.position.set(b.w * 0.22, b.h + roofH * 0.6, -b.d * 0.15); chim.castShadow = true; g.add(chim); parts.roof.push(chim);
     }
@@ -1634,7 +1669,7 @@ BUILDINGS.forEach((b) => {
       if (b.w < 5.5 && f === 0) continue;
       const wx = sx * b.w * 0.3, wy = 1.9 + f * 2.6 + (f === 0 ? 0 : 0.4);
       if (f === 0 && Math.abs(wx) < 1.4) continue;
-      const frame = new THREE.Mesh(roundedBox(1.4, 1.3, 0.25, 0.1), mat('#ffffff')); frame.position.set(wx, wy, b.d / 2 + 0.05); g.add(frame);
+      const frame = new THREE.Mesh(roundedBox(1.4, 1.3, 0.25, 0.1, 1), mat(STYLE.trim)); frame.position.set(wx, wy, b.d / 2 + 0.05); g.add(frame);
       const wdw = new THREE.Mesh(roundedBox(1.05, 0.95, 0.2, 0.06), mat(STYLE.window, { emissive: C('#1e4a7a'), emissiveIntensity: 0.35, roughness: 0.15 }));
       wdw.position.set(wx, wy, b.d / 2 + 0.13); g.add(wdw);
     }
@@ -1642,7 +1677,7 @@ BUILDINGS.forEach((b) => {
       const sign = textPlane([b.name], Math.min(b.w - 0.5, 8), 1.4, { bg: '#fffbe6', border: b.roofColor, w: 1024, h: 180, size: 96 });
       sign.position.set(0, Math.min(b.h - 0.9, 3.5), b.d / 2 + 0.24); g.add(sign);
       // randig markis
-      const awTex = patternTexture('checker', '#ffffff', b.roofColor, 1); awTex.repeat.set(4, 0.25);
+      const awTex = patternTexture('stripes', '#fff6e6', b.roofColor, 1); awTex.repeat.set(1, 1);
       const aw = new THREE.Mesh(roundedBox(3.2, 0.14, 1.1, 0.06), mat('#ffffff', { map: awTex }));
       aw.position.set(0, 2.7, b.d / 2 + 0.55); aw.rotation.x = 0.35; aw.castShadow = true; g.add(aw);
     }
@@ -1650,7 +1685,7 @@ BUILDINGS.forEach((b) => {
   const front = { x: Math.sin(rot), z: Math.cos(rot) };
   const sol = { x, z, rot, hw: b.w / 2, hd: b.d / 2, h: b.h + (b.shape === 'tower' ? 0.25 : 0.25), roofH, def: b,
     doorX: x + front.x * (b.d / 2 + 1.4), doorZ: z + front.z * (b.d / 2 + 1.4) };
-  solids.push(sol);
+  solids.push(sol); sol.g = g; sol.parts = parts;
   // hus som kan bli "gå in i"-hus (se WALK nedan). Tornet (Fyren) och hus med walkIn: false är alltid massiva.
   if (b.shape !== 'tower' && b.walkIn !== false) WALK_HOUSES.push({ b, g, x, z, rot, roofH, parts, sol });
   // rutig gångväg från torget till dörren (bara ring-hus)
@@ -1663,6 +1698,7 @@ BUILDINGS.forEach((b) => {
   }
 });
 solids.push({ x: 0, z: 0, rot: 0, hw: 2.2, hd: 2.2, h: 0.6, roofH: 0, def: { name: 'Fontänen' } });
+solids.push({ x: 0, z: 0, rot: 0, hw: 0.5, hd: 0.5, h: 4.1, roofH: 0, def: { name: 'Fontänen' } });   // fontänens pelare (1.9.0)
 
 /* --- Ödehuset (hemligt, övergivet hus som man kan gå in i) --- */
 const HOUSE = (function () {
@@ -2044,7 +2080,7 @@ function freeSpot(x, z, pad) {
   for (const b of BUILDINGS) if (b.angle !== undefined) { const a = b.angle * Math.PI / 180, ux = Math.sin(a), uz = Math.cos(a), along = x * ux + z * uz, perp = Math.abs(-x * uz + z * ux); if (along > 12 && along < b.dist && perp < 2.6) return false; }
   return true;
 }
-const trunkGeo = new THREE.CylinderGeometry(0.28, 0.4, 2, 10), ballGeo = new THREE.SphereGeometry(1.6, 18, 12), coneGeo = new THREE.ConeGeometry(1.7, 3.4, 10);
+const trunkGeo = new THREE.CylinderGeometry(0.22, 0.38, 2, 6), ballGeo = new THREE.IcosahedronGeometry(1.6, 1), coneGeo = new THREE.ConeGeometry(1.7, 3.4, 7);
 const trunkMat = mat(STYLE.treeTrunk), leafMats = STYLE.treeLeaf.map((c) => mat(c, { roughness: 0.6 }));
 let trees = 0; const TREE_POS = [];   // [x, z, skala] – används för Halloween-näten
 for (let i = 0; i < 600 && trees < 60; i++) {
@@ -2057,7 +2093,7 @@ for (let i = 0; i < 600 && trees < 60; i++) {
   else { const ball = new THREE.Mesh(ballGeo, lm); ball.position.y = 3.1; ball.scale.set(1, 1.15, 1); ball.castShadow = true; t.add(ball); }
   t.position.set(x, terrainH(x, z) - 0.05, z); t.scale.setScalar(s); island.add(t); trees++; TREE_POS.push([x, z, s]);
 }
-const bushGeo = new THREE.SphereGeometry(0.8, 14, 10), flowerGeo = new THREE.SphereGeometry(0.16, 8, 6);
+const bushGeo = new THREE.IcosahedronGeometry(0.8, 0), flowerGeo = new THREE.IcosahedronGeometry(0.16, 0);
 for (let i = 0, n = 0; i < 400 && n < 50; i++) {
   const a = rand() * Math.PI * 2, d = 15 + rand() * (R - 20), x = Math.sin(a) * d, z = Math.cos(a) * d;
   if (!freeSpot(x, z, 1.5)) continue; n++;
@@ -2067,12 +2103,12 @@ for (let i = 0, n = 0; i < 400 && n < 50; i++) {
 }
 for (let i = 0; i < 25; i++) {
   const a = rand() * Math.PI * 2, d = R - 2 + rand() * 8;
-  const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6 + rand() * 1.2, 1), mat(STYLE.rock));
+  const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6 + rand() * 1.2, 0), mat(STYLE.rock));
   r.position.set(Math.sin(a) * d, -0.2, Math.cos(a) * d); r.rotation.set(rand(), rand(), rand()); r.scale.y = 0.7; r.castShadow = true; island.add(r);
 }
 const clouds = new THREE.Group(); island.add(clouds);
-const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: C('#b8cce6'), transparent: true, opacity: 0.96 });
-const puffCloudGeo = new THREE.SphereGeometry(1, 16, 12);
+const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: C('#bfe3e6'), flatShading: true });
+const puffCloudGeo = new THREE.IcosahedronGeometry(1, 1);
 for (let i = 0; i < 40; i++) {
   const c = new THREE.Group(); const n = 4 + Math.floor(rand() * 4);
   for (let k = 0; k < n; k++) { const s = new THREE.Mesh(puffCloudGeo, cloudMat); const sc = 3 + rand() * 3 + (k > 0 && k < n - 1 ? 1.5 : 0);
@@ -2091,6 +2127,181 @@ function makeStars(n, radius) {
 const stars = makeStars(1500, 19000); stars.material.opacity = 0; island.add(stars);
 const moonInSky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 24), new THREE.MeshBasicMaterial({ color: 0xe8e8f0, fog: false }));
 moonInSky.position.set(4000, 16000, -9000); island.add(moonInSky);
+/* ================= 1.9.0: Stil – kolonial hamnstad i fasetterad low-poly =================
+   Husdetaljer (valvbågar, fönsterluckor, balkonger i smide, list, hörnkedjor, rankor, skorstenar),
+   hamn med bryggor, båtar och lyftkran, klippor i havet, palmer, agaver, stenar, bänkar, tunnor och lådor, marknadsstånd.
+   Allt här är bara utseende (inga nya hinder) så spelet fungerar precis som förut. Låg grafik = färre saker. */
+const DECOR_N = (hi, lo) => (LOWGFX ? lo : hi);
+const dRand = rng(1909);
+function dMerge(list) { return hwMerge(list); }
+function dP(g, x, y, z, sx, sy, sz, rx, ry, rz) { return hwPlace(g, x, y, z, sx, sy, sz, rx, ry, rz); }
+function dArch(r, depth, seg) { const g = new THREE.CylinderGeometry(r, r, depth, seg || 10, 1, false, -Math.PI / 2, Math.PI); g.rotateX(-Math.PI / 2); return g; }   // halvcirkel, platt sida nedåt
+function dAddAt(parent, o, x, y, z) { o.position.set(x, y, z); parent.add(o); return o; }
+const dShadowy = (o, cast) => { o.castShadow = cast && !LOWGFX; o.receiveShadow = true; return o; };
+
+/* ---- husdetaljer ---- */
+solids.forEach((s, idx) => {
+  const b = s.def, g = s.g; if (!g || !b || b.shape === 'tower') return;
+  const hw = b.w / 2, hd = b.d / 2, fz = hd + 0.02;
+  // egna material per hus (husen tonas var för sig när man går in)
+  const M = { trim: mat(STYLE.trim), shut: mat(STYLE.shutters[idx % STYLE.shutters.length]), iron: mat(STYLE.iron, { roughness: 0.5 }), vine: mat(STYLE.vine), glass: mat('#244b57', { roughness: 0.2, emissive: C('#123844'), emissiveIntensity: 0.4 }),
+    stone: mat(STYLE.stone), dark: mat('#3a2a20') };
+  const trimG = [], shutG = [], ironG = [], vineG = [], glassG = [];
+  // list under taket + hörnkedjor
+  trimG.push(dP(new THREE.BoxGeometry(b.w + 0.25, 0.28, 0.2), 0, b.h - 0.32, fz + 0.06, 1, 1, 1));
+  for (const sx of [-1, 1]) trimG.push(dP(new THREE.BoxGeometry(0.32, b.h - 0.6, 0.12), sx * (hw - 0.22), (b.h - 0.6) / 2 + 0.6, fz + 0.03, 1, 1, 1));
+  // valvbåge över dörren
+  trimG.push(dP(dArch(DOOR_W / 2 + 0.22, 0.16, 10), 0, 2.5, fz + 0.06, 1, 1, 1));
+  glassG.push(dP(dArch(DOOR_W / 2 - 0.02, 0.1, 10), 0, 2.5, fz + 0.08, 1, 1, 1));
+  // fönster: rundade överstycken, luckor, balkong på övervåningen
+  const floors = Math.max(1, Math.floor(b.h / 3));
+  for (let f = 0; f < floors; f++) for (const sx of [-1, 1]) {
+    if (b.w < 5.5 && f === 0) continue;
+    const wx = sx * b.w * 0.3, wy = 1.9 + f * 2.6 + (f === 0 ? 0 : 0.4);
+    if (f === 0 && Math.abs(wx) < 1.4) continue;
+    trimG.push(dP(dArch(0.7, 0.24, 8), wx, wy + 0.62, fz + 0.04, 1, 1, 1));
+    glassG.push(dP(dArch(0.5, 0.2, 8), wx, wy + 0.47, fz + 0.1, 1, 1, 1));
+    for (const k of [-1, 1]) shutG.push(dP(new THREE.BoxGeometry(0.42, 1.25, 0.08), wx + k * 0.95, wy, fz + 0.1, 1, 1, 1, 0, k * 0.15, 0));
+    if (f > 0 && Math.abs(wx) + 1.1 < hw) {   // balkong i smide
+      trimG.push(dP(new THREE.BoxGeometry(1.9, 0.14, 0.75), wx, wy - 0.72, fz + 0.38, 1, 1, 1));
+      ironG.push(dP(new THREE.BoxGeometry(1.9, 0.05, 0.05), wx, wy - 0.12, fz + 0.73, 1, 1, 1));
+      for (const k of [-1, 1]) ironG.push(dP(new THREE.BoxGeometry(0.05, 0.05, 0.72), wx + k * 0.93, wy - 0.12, fz + 0.38, 1, 1, 1));
+      for (let i = 0; i <= 8; i++) ironG.push(dP(new THREE.BoxGeometry(0.03, 0.58, 0.03), wx - 0.93 + i * 1.86 / 8, wy - 0.4, fz + 0.73, 1, 1, 1));
+    }
+  }
+  // rankor uppför ett hörn (vartannat hus)
+  if (idx % 2 === 0) { const sx = idx % 4 === 0 ? -1 : 1, top = b.h * (0.6 + dRand() * 0.3);
+    for (let y = 0.3; y < top; y += 0.32) { const r = 0.2 + dRand() * 0.18; vineG.push(dP(new THREE.IcosahedronGeometry(r, 0), sx * (hw - 0.3 - dRand() * 0.4 - (y / top) * 0.6), y, fz + 0.12, 1, 1, 0.6, dRand(), dRand(), 0)); }
+    for (let i = 0; i < 6; i++) vineG.push(dP(new THREE.IcosahedronGeometry(0.18 + dRand() * 0.12, 0), sx * (hw - 0.4 - i * 0.35), top - dRand() * 0.3, fz + 0.12, 1, 1, 0.6)); }
+  // skorsten på platta tak
+  if (b.roof !== 'pyramid') { const ch = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.1, 0.7), M.stone); ch.position.set(hw * 0.55, b.h + 0.8, -hd * 0.45); dShadowy(ch, true); g.add(ch);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.15, 0.9), M.trim); cap.position.set(hw * 0.55, b.h + 1.4, -hd * 0.45); g.add(cap); }
+  for (const [list, m, cast] of [[trimG, M.trim, true], [shutG, M.shut, false], [ironG, M.iron, true], [vineG, M.vine, true], [glassG, M.glass, false]])
+    if (list.length) g.add(dShadowy(new THREE.Mesh(dMerge(list), m), cast));
+});
+
+/* ---- tunnor, lådor (instansade) ---- */
+const barrelGeo = (() => { const g = new THREE.CylinderGeometry(0.42, 0.42, 1, 8, 2); const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i), k = 1 + 0.12 * (1 - 4 * y * y); p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * k); } g.translate(0, 0.5, 0); g.computeVertexNormals(); return g; })();
+const crateGeo = (() => { const parts = [dP(new THREE.BoxGeometry(0.9, 0.9, 0.9), 0, 0.45, 0, 1, 1, 1)];
+  for (const z of [-0.46, 0.46]) { parts.push(dP(new THREE.BoxGeometry(0.95, 0.12, 0.04), 0, 0.12, z, 1, 1, 1), dP(new THREE.BoxGeometry(0.95, 0.12, 0.04), 0, 0.78, z, 1, 1, 1), dP(new THREE.BoxGeometry(0.12, 0.95, 0.04), 0, 0.45, z, 1, 1, 1, 0, 0, 0.78)); }
+  return dMerge(parts); })();
+const PROPS = { barrel: [], crate: [] };
+function dProp(kind, x, y, z, ry, s) { PROPS[kind].push([x, y, z, ry, s || 1]); }
+// vid husen
+solids.forEach((s, i) => { const b = s.def; if (!s.g || !b || b.shape === 'tower') return;
+  const side = i % 2 ? 1 : -1, [x1, z1] = toWorld(s, side * (s.hw + 0.75), s.hd - 0.7), [x2, z2] = toWorld(s, side * (s.hw + 0.7), s.hd - 1.8);
+  dProp(i % 3 ? 'barrel' : 'crate', x1, terrainH(x1, z1), z1, dRand() * 6, 0.9 + dRand() * 0.2);
+  if (!LOWGFX || i % 2) dProp(i % 3 ? 'crate' : 'barrel', x2, terrainH(x2, z2), z2, dRand() * 6, 0.8 + dRand() * 0.3); });
+
+/* ---- palmer ---- */
+const palmTrunkGeo = (() => { const parts = []; let x = 0, y = 0; for (let i = 0; i < 6; i++) { const t = i / 6, h = 0.95; parts.push(dP(new THREE.CylinderGeometry(0.17 - t * 0.05, 0.22 - t * 0.05, h, 6), x + 0.06 * i, y + h / 2, 0, 1, 1, 1, 0, 0, -0.06 - t * 0.08)); y += h * 0.98; x += 0.12 + t * 0.12; }
+  return { g: dMerge(parts), top: [x + 0.3, y] }; })();
+const palmLeafGeo = (() => { const parts = [], [tx, ty] = palmTrunkGeo.top;
+  for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2;
+    const leaf = new THREE.ConeGeometry(0.42, 2.6, 4, 2); const p = leaf.attributes.position; for (let k = 0; k < p.count; k++) { const yy = p.getY(k); p.setZ(k, p.getZ(k) * 0.18); p.setY(k, yy); p.setX(k, p.getX(k) + 0); } leaf.computeVertexNormals();
+    leaf.translate(0, 1.3, 0); leaf.rotateX(1.25 + (i % 2) * 0.25); leaf.rotateY(a); leaf.translate(tx, ty, 0); parts.push(leaf); }
+  parts.push(dP(new THREE.IcosahedronGeometry(0.3, 0), tx, ty - 0.1, 0, 1, 1, 1)); return dMerge(parts); })();
+const PALMS = [];
+for (let i = 0, n = 0; i < 500 && n < DECOR_N(18, 9); i++) {
+  const a = dRand() * Math.PI * 2, d = n < 8 ? 60 + dRand() * 7 : 22 + dRand() * 37, x = Math.sin(a) * d, z = Math.cos(a) * d;
+  if (!freeSpot(x, z, 3)) continue; if (d > 55 && Math.abs(((a * 180 / Math.PI) % 360) - 45) < 12) continue;   // inte på bryggan
+  PALMS.push([x, terrainH(x, z) - 0.05, z, dRand() * 6, 0.8 + dRand() * 0.45]); n++; }
+
+/* ---- agaver / grästuvor och små stenar ---- */
+const agaveGeo = (() => { const parts = []; for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2 + (i % 2) * 0.3, l = 0.9 + (i % 3) * 0.25;
+  const b = new THREE.ConeGeometry(0.11, l, 3); b.scale(1, 1, 0.35); b.translate(0, l / 2, 0); b.rotateX(0.5 + (i % 3) * 0.2); b.rotateY(a); parts.push(b); } return dMerge(parts); })();
+const TUFTS = [], STONES = [];
+for (let i = 0, n = 0; i < 1500 && n < DECOR_N(150, 60); i++) {
+  const a = dRand() * Math.PI * 2, d = 8 + dRand() * (R - 6), x = Math.sin(a) * d, z = Math.cos(a) * d;
+  if (d < 15 && d > 13.2) { /* vid torgets kant: ok */ } else if (!freeSpot(x, z, 1.2) && !(d < 13 && d > 6)) continue;
+  let inHouse = false; for (const s of solids) { const [lx, lz] = toLocal(s, x, z); if (Math.abs(lx) < s.hw + 0.8 && Math.abs(lz) < s.hd + 2.2) { inHouse = true; break; } } if (inHouse) continue;
+  TUFTS.push([x, terrainH(x, z), z, dRand() * 6, 0.5 + dRand() * 0.7]); n++; }
+for (let i = 0; i < DECOR_N(70, 30); i++) { const a = dRand() * Math.PI * 2, d = 6 + dRand() * (R - 4), x = Math.sin(a) * d, z = Math.cos(a) * d; if (!freeSpot(x, z, 0.8) && d > 15) continue; STONES.push([x, terrainH(x, z) + 0.05, z, dRand() * 6, 0.15 + dRand() * 0.3]); }
+
+/* ---- bänkar och marknadsstånd runt torget ---- */
+const benchGeo = dMerge([dP(new THREE.BoxGeometry(2.2, 0.12, 0.55), 0, 0.5, 0, 1, 1, 1), dP(new THREE.BoxGeometry(2.2, 0.45, 0.1), 0, 0.85, -0.25, 1, 1, 1, -0.15, 0, 0),
+  dP(new THREE.BoxGeometry(0.12, 0.5, 0.5), -0.9, 0.25, 0, 1, 1, 1), dP(new THREE.BoxGeometry(0.12, 0.5, 0.5), 0.9, 0.25, 0, 1, 1, 1)]);
+const BENCHES = []; for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2 + Math.PI / 4, d = 9.2; BENCHES.push([Math.sin(a) * d, 0.03, Math.cos(a) * d, a + Math.PI, 1]); }
+for (const [a0, col] of [[1.833, '#c4532e'], [4.974, '#2f7f9f']]) {   // marknadsstånd med randig markis
+  const a = a0, d = 11.4, x = Math.sin(a) * d, z = Math.cos(a) * d, st = new THREE.Group(); st.position.set(x, 0.03, z); st.rotation.y = a + Math.PI; island.add(st);
+  const wood = mat(STYLE.wood), tex = patternTexture('stripes', '#fff3df', col, 1); tex.repeat.set(1.5, 1);
+  st.add(dShadowy(new THREE.Mesh(dMerge([dP(new THREE.BoxGeometry(2.6, 0.12, 1.1), 0, 0.95, 0, 1, 1, 1), dP(new THREE.BoxGeometry(2.4, 0.85, 0.08), 0, 0.5, 0.5, 1, 1, 1)].concat(
+    [[-1.25, -0.5], [1.25, -0.5], [-1.25, 0.5], [1.25, 0.5]].map(([px, pz]) => dP(new THREE.BoxGeometry(0.1, 2.5, 0.1), px, 1.25, pz, 1, 1, 1)))), wood), true));
+  const aw = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.08, 1.6), mat('#ffffff', { map: tex })); aw.position.set(0, 2.5, -0.15); aw.rotation.x = -0.22; st.add(dShadowy(aw, true));
+  const fruit = new THREE.Mesh(dMerge(Array.from({ length: 9 }, (_, i) => dP(new THREE.IcosahedronGeometry(0.13, 0), -0.9 + (i % 5) * 0.4 + (i > 4 ? 0.2 : 0), 1.1 + (i > 4 ? 0.15 : 0), -0.15 + (i > 4 ? 0.15 : 0), 1, 1, 1))), mat(a0 < 3 ? '#ff8a1f' : '#e8c33a')); st.add(fruit);
+  dProp('crate', x + Math.sin(a + 1.6) * 1.9, 0.03, z + Math.cos(a + 1.6) * 1.9, a, 0.8); dProp('barrel', x + Math.sin(a - 1.6) * 1.9, 0.03, z + Math.cos(a - 1.6) * 1.9, 0, 0.9);
+}
+
+/* ---- hamnen: bryggor med stolpar, båtar, lyftkran (vid fyren, mot nordost) ---- */
+const DOCK = { a: 45 * Math.PI / 180, boats: [], view: null };
+{
+  const a = DOCK.a, ux = Math.sin(a), uz = Math.cos(a), vx = Math.cos(a), vz = -Math.sin(a);   // u = utåt, v = åt sidan
+  const P2 = (along, side) => [ux * along + vx * side, uz * along + vz * side];
+  const deckT = patternTexture('planks', STYLE.wood, STYLE.woodDark, 1);
+  const wood = mat('#ffffff', { map: deckT }), woodDark = mat(STYLE.woodDark), posts = [];
+  const pier = (a0, a1, side0, width, rotOff) => {   // en brygga längs u (eller tvärs)
+    const len = a1 - a0, mid = (a0 + a1) / 2, [x, z] = P2(mid, side0), t = deckT.clone(); t.needsUpdate = true; t.repeat.set(width / 1.2, len / 3);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(width, 0.22, len), mat('#ffffff', { map: t })); m.position.set(x, 0.32, z); m.rotation.y = a + (rotOff || 0); island.add(dShadowy(m, true));
+    for (let k = 0; k <= Math.floor(len / 3.2); k++) for (const sd of [-1, 1]) { const al = a0 + k * 3.2; posts.push(rotOff ? P2(mid + sd * (width / 2 + 0.1), side0 - len / 2 + k * 3.2) : P2(al, side0 + sd * (width / 2 + 0.1))); }
+  };
+  pier(68, 98, 0, 3.2);   // huvudbrygga (T-delen nedan)
+  { const len = 16, t = deckT.clone(); t.needsUpdate = true; t.repeat.set(3, 1); const [x, z] = P2(94.7, 0); const m = new THREE.Mesh(new THREE.BoxGeometry(len, 0.22, 3.4), mat('#ffffff', { map: t }));
+    m.position.set(x, 0.32, z); m.rotation.y = a; island.add(dShadowy(m, true)); for (let k = -2; k <= 2; k++) for (const sd of [-1, 1]) posts.push(P2(94.7 + sd * 1.8, k * 3.8)); }
+  pier(70, 84, -9, 2.4);  // liten sidobrygga
+  const postGeo = new THREE.CylinderGeometry(0.17, 0.2, 3.4, 6); postGeo.translate(0, -0.9, 0);
+  const pm = new THREE.InstancedMesh(postGeo, woodDark, posts.length); const d4 = new THREE.Object3D();
+  posts.forEach(([x, z], i) => { d4.position.set(x, 0.1, z); d4.rotation.set(0, i, 0); d4.updateMatrix(); pm.setMatrixAt(i, d4.matrix); }); dShadowy(pm, true); island.add(pm);
+  // lådor och tunnor på bryggan
+  for (const [al, sd, k] of [[74, 1, 'crate'], [74.9, 1.05, 'crate'], [80, -1.1, 'barrel'], [80.9, -1.05, 'barrel'], [88, 1.1, 'crate'], [95, -5, 'barrel'], [95.6, 5.5, 'crate']]) { const [x, z] = P2(al, sd); dProp(k, x, 0.43, z, dRand() * 3, 0.85); }
+  { const [x, z] = P2(74.9, 1.05); dProp('crate', x, 1.2, z, 0.4, 0.7); }
+  // lyftkran med last i ett nät
+  { const [x, z] = P2(90, -1.2), g = new THREE.Group(); g.position.set(x, 0.43, z); g.rotation.y = a + Math.PI / 2; island.add(g);
+    g.add(dShadowy(new THREE.Mesh(dMerge([dP(new THREE.BoxGeometry(0.35, 6.5, 0.35), 0, 3.25, 0, 1, 1, 1), dP(new THREE.BoxGeometry(0.28, 0.28, 3.6), 0, 6.2, 1.5, 1, 1, 1), dP(new THREE.BoxGeometry(0.2, 0.2, 2.2), 0, 5.2, 0.75, 1, 1, 1, 0.75, 0, 0)]), woodDark), true));
+    dAddAt(g, new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 2.2, 4), mat('#d8c7a0')), 0, 5.1, 3.1);
+    const cargo = new THREE.Group(); cargo.position.set(0, 3.4, 3.1); g.add(cargo); DOCK.cargo = cargo;
+    cargo.add(dShadowy(new THREE.Mesh(dMerge([dP(new THREE.BoxGeometry(1.8, 0.12, 1.4), 0, 0, 0, 1, 1, 1), dP(new THREE.BoxGeometry(0.8, 0.6, 0.8), -0.35, 0.36, 0, 1, 1, 1), dP(new THREE.BoxGeometry(0.6, 0.5, 0.6), 0.45, 0.31, 0.1, 1, 1, 1)]), mat(STYLE.wood)), true));
+    dAddAt(cargo, new THREE.Mesh(barrelGeo, mat('#7a5a3a')), 0.3, 0.06, -0.35); }
+  // båtar
+  const hullGeo = (L, W, H) => { const g = new THREE.BoxGeometry(W, H, L, 1, 1, 3); const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const zz = p.getZ(i) / (L / 2), yy = p.getY(i) / (H / 2); let sx = 1; if (zz > 0.3) sx = 1 - (zz - 0.3) / 0.7 * 0.92; if (zz < -0.6) sx *= 0.85; if (yy < 0) sx *= 0.55; p.setX(i, p.getX(i) * sx); if (zz > 0.9 && yy > 0) p.setY(i, p.getY(i) + 0.2); }
+    g.computeVertexNormals(); return g; };
+  const boat = (along, side, rot, L, sail, col) => { const [x, z] = P2(along, side), g = new THREE.Group(); g.position.set(x, -0.45, z); g.rotation.y = a + rot; island.add(g);
+    g.add(dShadowy(new THREE.Mesh(hullGeo(L, L * 0.34, 0.8), mat(col)), true));
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(L * 0.33, 0.08, L * 0.7), mat(STYLE.trim)); rim.position.set(0, 0.42, -L * 0.08); g.add(rim);
+    dAddAt(g, new THREE.Mesh(new THREE.BoxGeometry(L * 0.3, 0.06, 0.3), mat(STYLE.wood)), 0, 0.3, 0);
+    if (sail) { dAddAt(g, dShadowy(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, L * 1.1, 5), mat(STYLE.woodDark)), true), 0, L * 0.55, -L * 0.05);
+      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute([0, 0.9, 0, 0, L * 1.05, 0, 0, 0.9, -L * 0.45, 0, 0.9, 0, 0, L * 1.05, 0, 0, 0.9, L * 0.4], 3)); sg.computeVertexNormals();
+      const sm = new THREE.Mesh(sg, mat('#f4ead2', { side: THREE.DoubleSide })); sm.position.set(0.05, 0, -L * 0.05); g.add(dShadowy(sm, true)); }
+    DOCK.boats.push({ g, ph: dRand() * 6, y: -0.45 }); };
+  boat(80, 4.2, 0.08, 5.5, true, '#8a5a3a'); boat(88, -4.4, -0.05, 4.2, false, '#2f6f9f'); boat(99.5, 5, Math.PI / 2 + 0.2, 7.5, true, '#a0472f'); boat(76, -5.8, 0.3, 2.8, false, '#c9a36b');
+  { const [x, z] = P2(66.5, 6.5); DOCK.view = [x, z, a + Math.PI - 0.45]; }
+}
+
+/* ---- klippor i havet (söder/sydväst och nordväst) ---- */
+{ const parts = [], partsD = [];
+  for (const [a0, a1, n] of [[180, 255, DECOR_N(16, 9)], [300, 335, DECOR_N(7, 4)]]) for (let i = 0; i < n; i++) {
+    const a = (a0 + (a1 - a0) * (i + dRand() * 0.6) / n) * Math.PI / 180, d = 84 + dRand() * 14, h = 7 + dRand() * 18, w = 5 + dRand() * 6;
+    const geo = new THREE.DodecahedronGeometry(1, 0); geo.scale(w, h, w * 0.8); geo.rotateY(dRand() * 6); geo.translate(Math.sin(a) * d, h * 0.45 - 2, Math.cos(a) * d);
+    (i % 3 ? parts : partsD).push(geo);
+    if (i % 2 === 0) { const g2 = new THREE.DodecahedronGeometry(1, 0); g2.scale(w * 0.6, h * 0.5, w * 0.6); g2.translate(Math.sin(a + 0.04) * (d - 6), h * 0.15 - 1.5, Math.cos(a + 0.04) * (d - 6)); partsD.push(g2); } }
+  island.add(dShadowy(new THREE.Mesh(dMerge(parts), mat(STYLE.cliff)), true)); island.add(dShadowy(new THREE.Mesh(dMerge(partsD), mat(STYLE.cliffDark)), true)); }
+
+/* ---- rita ut instansade saker ---- */
+{ const d4 = new THREE.Object3D();
+  const inst = (geo, m, list, cast) => { if (!list.length) return null; const im = new THREE.InstancedMesh(geo, m, list.length);
+    list.forEach(([x, y, z, ry, s], i) => { d4.position.set(x, y, z); d4.rotation.set(0, ry, 0); d4.scale.setScalar(s); d4.updateMatrix(); im.setMatrixAt(i, d4.matrix); });
+    island.add(dShadowy(im, cast)); return im; };
+  inst(barrelGeo, mat('#8a5a36'), PROPS.barrel, true); inst(crateGeo, mat('#b48a5a'), PROPS.crate, true);
+  inst(palmTrunkGeo.g, mat(STYLE.palmTrunk), PALMS, true); inst(palmLeafGeo, mat(STYLE.palmLeaf, { side: THREE.DoubleSide }), PALMS, true);
+  STYLE.agave.forEach((c, k) => inst(agaveGeo, mat(c, { side: THREE.DoubleSide }), TUFTS.filter((_, i) => i % 3 === k), false));
+  inst(new THREE.DodecahedronGeometry(1, 0), mat(STYLE.rock), STONES, false);
+  inst(benchGeo, mat(STYLE.wood), BENCHES, true); }
+
+function decorUpdate(t) {
+  for (const b of DOCK.boats) { b.g.position.y = b.y + Math.sin(t * 1.1 + b.ph) * 0.08; b.g.rotation.z = Math.sin(t * 0.9 + b.ph) * 0.03; }
+  if (DOCK.cargo) DOCK.cargo.rotation.y = Math.sin(t * 0.5) * 0.15;
+}
+   // src/decor.js klistras in här av build.js (1.9.0: hamn, klippor, palmer, rekvisita, husdetaljer)
 
 /* ================= Spelaren (tecknad figur med triangelhuvud) ================= */
 function makePlayer(col) { col = Object.assign({ head: STYLE.player, shirt: STYLE.charShirt, pants: STYLE.charPants }, col || {});
@@ -2514,16 +2725,19 @@ window.addEventListener('keydown', (e) => {
   }
   setJumpKey(e.code); sfx.buy(); openMenu(); toast('Ny hoppknapp: ' + keyName(e.code) + ' ✅', 2.5);
 }, true);
+function gfxLabel(m) { return m === 'hog' ? 'Hög' : m === 'lag' ? 'Låg' : 'Auto'; }
 function openMenu() {
   openModal('menu', '⚙️ Meny', itemRow('⌨️', 'Byt hoppknapp', 'Nu hoppar du med <b>' + keyName(S.jumpKey) + '</b>.', 'Byt', true, false, 'rebind') +
     itemRow('↩️', 'Återställ hoppknappen', 'Hoppa med Mellanslag igen.', 'Mellanslag', S.jumpKey !== 'Space', false, 'rebindreset') +
     itemRow('🎃', 'Halloween', 'Spöken, spindlar och pumpor. Läge: <b>' + hwModeLabel(hwPrefs().mode) + '</b>' + (HW.on ? ' – på nu 👻' : ' – av nu') + '. Fångade spöken: <b>' + fmt(hwPrefs().ghosts) + '</b>.', 'Byt läge', SEASON.halloween.enabled, false, 'halloween') +
+    itemRow('🎨', 'Grafik', 'Nu: <b>' + gfxLabel(S.gfx) + '</b>' + (S.gfx === 'auto' ? ' (' + (LOWGFX ? 'Låg' : 'Hög') + ' på den här enheten)' : '') + '. Låg går snabbare på gamla telefoner.', 'Byt', true, false, 'gfx') +
     itemRow('🗑️', 'Börja om från början', 'Raderar allt sparat (hopp, pengar, märken).', 'Börja om', true, false, 'reset') +
     '<div class="sub">' + GAME.name + ' version ' + GAME.version + '. Spelet sparas automatiskt i webbläsaren.</div>');
 }
 $('mBody').addEventListener('click', (e) => { const b = e.target.closest('button[data-act]'); if (!b) return;
   if (b.dataset.act === 'rebind') { openRebind(); return; }
   if (b.dataset.act === 'rbcancel') { openMenu(); return; }
+  if (b.dataset.act === 'gfx') { S.gfx = S.gfx === 'auto' ? 'hog' : S.gfx === 'hog' ? 'lag' : 'auto'; save(); sfx.buy(); openMenu(); toast('🎨 Grafik: ' + gfxLabel(S.gfx) + ' – laddar om …', 2); setTimeout(() => { window.removeEventListener('beforeunload', save); save(); location.reload(); }, 900); return; }
   if (b.dataset.act === 'halloween') { const m = hwCycleMode(); sfx.buy(); openMenu(); toast('🎃 Halloween: ' + hwModeLabel(m), 2); return; }
   if (b.dataset.act === 'rebindreset') { setJumpKey('Space'); sfx.buy(); openMenu(); toast('Hoppknappen är Mellanslag igen.', 2); return; }
   if (b.dataset.act !== 'reset') return;
@@ -2742,8 +2956,8 @@ function step() {
     skyMat.color.setRGB(1, 1, 1).lerp(spaceCol, Math.max(t2, t1 * 0.3)); skyDome.position.copy(camera.position);
     island.fog.far = STYLE.fogFar + altitude * 3; island.fog.near = STYLE.fogNear + altitude;
     stars.material.opacity = t2; stars.position.copy(camera.position);
-    sun.position.set(P.x + 40, P.y + 80, P.z + 30); sun.target.position.set(P.x, P.y, P.z);
-    clouds.rotation.y += dt * 0.004; seaTex.offset.x = t * 0.01; seaTex.offset.y = t * 0.006;
+    sun.position.set(P.x + 60, P.y + 48, P.z + 34); sun.target.position.set(P.x, P.y, P.z);
+    decorUpdate(t, dt); clouds.rotation.y += dt * 0.004; seaTex.offset.x = t * 0.01; seaTex.offset.y = t * 0.006;
     fwater.position.y = 0.6 + Math.sin(t * 2) * 0.03;
     // Ödehuset: tona väggar/tak, snurra katten, hemlighet
     const op = 1 - 0.65 * HOUSE.blend, rop = 1 - 0.95 * HOUSE.blend;
@@ -3271,7 +3485,7 @@ $('bStart').addEventListener('click', () => {
   if (S.cleared) toast('Välkommen tillbaka, månhoppare! ♾️', 3);
 });
 hwApply();
-window.__hoppspel = { HW, hwApply, hwCycleMode, hwInSeason, hwReward, ARC, MINIGAMES, openArcade, closeArcade, arcStart, get uiOpen() { return uiOpen(); }, S, P, cam, HOUSE, solids, autosaveLog, openShop, get VS() { return VS; }, get VS_MAIN() { return VS_MAIN; }, get FREE() { return FREE; }, JOY, WALK, modeName, BUILDINGS, NET: () => NET, fmt, gainPerJump, jumpHeight, maxJumps, get world() { return world; } };
+window.__hoppspel = { GFX, DOCK, island, HW, hwApply, hwCycleMode, hwInSeason, hwReward, ARC, MINIGAMES, openArcade, closeArcade, arcStart, get uiOpen() { return uiOpen(); }, S, P, cam, HOUSE, solids, autosaveLog, openShop, get VS() { return VS; }, get VS_MAIN() { return VS_MAIN; }, get FREE() { return FREE; }, JOY, WALK, modeName, BUILDINGS, NET: () => NET, fmt, gainPerJump, jumpHeight, maxJumps, get world() { return world; } };
 })();
 </script>
 <script>/* webbapp: offline + be om beständig lagring (sparningen ska inte rensas) */
