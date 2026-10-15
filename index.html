@@ -356,7 +356,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
 const GAME = {
   name: 'Neos Hoppspel',
-  version: '1.9.1',
+  version: '1.9.2',
   saveKey: 'neos-hoppspel-save-v1',
   goal: 1e12,               // 1 biljon hopp = spelet klarat
   teleportHeight: 20,       // meter över marken innan "Teleportera" visas
@@ -397,6 +397,8 @@ const STYLE = {
   // 1.9.0 stil: putsade kolonialhus (fasad, tak, list, fönsterluckor, smide, rankor)
   trim: '#f3e6cc', iron: '#2c2a30', vine: '#4f8f3a', palmLeaf: '#5c9e3a', palmTrunk: '#a07a4e', agave: ['#9aa63a', '#b7a94a', '#7f9a3c'],
   wood: '#a77b52', woodDark: '#6e4a2f', cliff: '#bba78e', cliffDark: '#9c8a73', shutters: ['#3f7f6a', '#2f6f9f', '#3f8f8a', '#7a5a9a'],
+  // 1.9.2: blomlådor under fönstren (låda i terrakotta, en blomfärg per hus)
+  flowerBox: '#b9542f', windowFlowers: ['#e8344e', '#ff6fa8', '#ff8a1f', '#fff4f8', '#c04bd8', '#ffcf3a'],
   oldWood: '#8d8579', oldWood2: '#4f4840', oldFloor: '#6e5a45', oldRoof: '#5b5560', catFur: '#ff9a3c',
   // rullande kullar: vinkel (grader), avstånd från mitten, radie, höjd
   hills: [
@@ -566,6 +568,9 @@ const SECRET_HOUSE = { id: 'odehuset', name: 'Ödehuset', angle: 135, dist: 57, 
 
 /* ---- Nyheter / versionslogg (nyast först) ---- */
 const CHANGELOG = [
+  { version: '1.9.2', date: '2026-10-15', items: [
+    '🌺 Blomlådor! Under husens fönster och på balkongerna sitter nu lådor fulla med färgglada blommor – röda, rosa, orange, vita, lila och gula.',
+  ]},
   { version: '1.9.1', date: '2026-10-14', items: [
     '☀️ Starkare färger! Solen lyser varmt och gyllene, skuggorna är mörkare, himlen är djupt turkos och husen har klarare färger.',
     '🌊 Havet och fontänens vatten är mer turkosa, och sanden är varmare.',
@@ -2149,8 +2154,18 @@ solids.forEach((s, idx) => {
   const hw = b.w / 2, hd = b.d / 2, fz = hd + 0.02;
   // egna material per hus (husen tonas var för sig när man går in)
   const M = { trim: mat(STYLE.trim), shut: mat(STYLE.shutters[idx % STYLE.shutters.length]), iron: mat(STYLE.iron, { roughness: 0.5 }), vine: mat(STYLE.vine), glass: mat('#244b57', { roughness: 0.2, emissive: C('#123844'), emissiveIntensity: 0.4 }),
-    stone: mat(STYLE.stone), dark: mat('#3a2a20') };
-  const trimG = [], shutG = [], ironG = [], vineG = [], glassG = [];
+    stone: mat(STYLE.stone), dark: mat('#3a2a20'), box: mat(STYLE.flowerBox), flower: mat(STYLE.windowFlowers[idx % STYLE.windowFlowers.length], { emissive: C('#1a1a1a') }) };
+  const trimG = [], shutG = [], ironG = [], vineG = [], glassG = [], boxG = [], flowerG = [];
+  // 1.9.2: blomlåda med blommor och blad (y = lådans överkant, z = lådans mitt)
+  const flowerBox = (x, y, z, w) => {
+    boxG.push(dP(new THREE.BoxGeometry(w, 0.3, 0.38), x, y - 0.15, z, 1, 1, 1));
+    for (const k of [-1, 1]) boxG.push(dP(new THREE.BoxGeometry(0.08, 0.16, 0.1), x + k * w * 0.35, y - 0.36, z - 0.12, 1, 1, 1));   // små konsoler
+    const n = Math.max(3, Math.round(w / 0.3));
+    for (let i = 0; i < n; i++) { const fx = x - w / 2 + 0.16 + i * (w - 0.32) / (n - 1);
+      vineG.push(dP(new THREE.IcosahedronGeometry(0.15 + dRand() * 0.05, 0), fx, y + 0.06, z + (i % 2 ? 0.06 : -0.05), 1.2, 0.8, 1, dRand(), dRand(), 0));
+      flowerG.push(dP(new THREE.IcosahedronGeometry(0.09 + dRand() * 0.04, 0), fx + (dRand() - 0.5) * 0.12, y + 0.2 + dRand() * 0.1, z + (dRand() - 0.3) * 0.2, 1, 1, 1, dRand(), dRand(), 0)); }
+    for (let i = 0; i < 2; i++) vineG.push(dP(new THREE.IcosahedronGeometry(0.1, 0), x + (i ? 1 : -1) * w * 0.3, y - 0.3, z + 0.14, 0.9, 1.6, 0.7, 0, 0, 0));   // hängande blad
+  };
   // list under taket + hörnkedjor
   trimG.push(dP(new THREE.BoxGeometry(b.w + 0.25, 0.28, 0.2), 0, b.h - 0.32, fz + 0.06, 1, 1, 1));
   for (const sx of [-1, 1]) trimG.push(dP(new THREE.BoxGeometry(0.32, b.h - 0.6, 0.12), sx * (hw - 0.22), (b.h - 0.6) / 2 + 0.6, fz + 0.03, 1, 1, 1));
@@ -2166,7 +2181,10 @@ solids.forEach((s, idx) => {
     trimG.push(dP(dArch(0.7, 0.24, 8), wx, wy + 0.62, fz + 0.04, 1, 1, 1));
     glassG.push(dP(dArch(0.5, 0.2, 8), wx, wy + 0.47, fz + 0.1, 1, 1, 1));
     for (const k of [-1, 1]) shutG.push(dP(new THREE.BoxGeometry(0.42, 1.25, 0.08), wx + k * 0.95, wy, fz + 0.1, 1, 1, 1, 0, k * 0.15, 0));
-    if (f > 0 && Math.abs(wx) + 1.1 < hw) {   // balkong i smide
+    const balcony = f > 0 && Math.abs(wx) + 1.1 < hw;
+    if (!balcony) flowerBox(wx, wy - 0.62, fz + 0.24, 1.5);   // 1.9.2: blomlåda under fönstret
+    else flowerBox(wx, wy - 0.06, fz + 0.94, 1.6);             // 1.9.2: blomlåda på balkongräcket
+    if (balcony) {   // balkong i smide
       trimG.push(dP(new THREE.BoxGeometry(1.9, 0.14, 0.75), wx, wy - 0.72, fz + 0.38, 1, 1, 1));
       ironG.push(dP(new THREE.BoxGeometry(1.9, 0.05, 0.05), wx, wy - 0.12, fz + 0.73, 1, 1, 1));
       for (const k of [-1, 1]) ironG.push(dP(new THREE.BoxGeometry(0.05, 0.05, 0.72), wx + k * 0.93, wy - 0.12, fz + 0.38, 1, 1, 1));
@@ -2180,7 +2198,7 @@ solids.forEach((s, idx) => {
   // skorsten på platta tak
   if (b.roof !== 'pyramid') { const ch = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.1, 0.7), M.stone); ch.position.set(hw * 0.55, b.h + 0.8, -hd * 0.45); dShadowy(ch, true); g.add(ch);
     const cap = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.15, 0.9), M.trim); cap.position.set(hw * 0.55, b.h + 1.4, -hd * 0.45); g.add(cap); }
-  for (const [list, m, cast] of [[trimG, M.trim, true], [shutG, M.shut, false], [ironG, M.iron, true], [vineG, M.vine, true], [glassG, M.glass, false]])
+  for (const [list, m, cast] of [[trimG, M.trim, true], [shutG, M.shut, false], [ironG, M.iron, true], [vineG, M.vine, true], [glassG, M.glass, false], [boxG, M.box, true], [flowerG, M.flower, false]])
     if (list.length) g.add(dShadowy(new THREE.Mesh(dMerge(list), m), cast));
 });
 
