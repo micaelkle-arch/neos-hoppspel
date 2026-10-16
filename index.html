@@ -356,7 +356,7 @@ function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"f
 
 const GAME = {
   name: 'Neos Hoppspel',
-  version: '1.9.2',
+  version: '1.9.3',
   saveKey: 'neos-hoppspel-save-v1',
   goal: 1e12,               // 1 biljon hopp = spelet klarat
   teleportHeight: 20,       // meter över marken innan "Teleportera" visas
@@ -399,6 +399,8 @@ const STYLE = {
   wood: '#a77b52', woodDark: '#6e4a2f', cliff: '#bba78e', cliffDark: '#9c8a73', shutters: ['#3f7f6a', '#2f6f9f', '#3f8f8a', '#7a5a9a'],
   // 1.9.2: blomlådor under fönstren (låda i terrakotta, en blomfärg per hus)
   flowerBox: '#b9542f', windowFlowers: ['#e8344e', '#ff6fa8', '#ff8a1f', '#fff4f8', '#c04bd8', '#ffcf3a'],
+  // 1.9.3: färgglada vimplar över torget
+  pennant: ['#e8344e', '#ff8a1f', '#ffcf3a', '#2f9f6f', '#2f6f9f', '#c04bd8'],
   oldWood: '#8d8579', oldWood2: '#4f4840', oldFloor: '#6e5a45', oldRoof: '#5b5560', catFur: '#ff9a3c',
   // rullande kullar: vinkel (grader), avstånd från mitten, radie, höjd
   hills: [
@@ -568,6 +570,9 @@ const SECRET_HOUSE = { id: 'odehuset', name: 'Ödehuset', angle: 135, dist: 57, 
 
 /* ---- Nyheter / versionslogg (nyast först) ---- */
 const CHANGELOG = [
+  { version: '1.9.3', date: '2026-10-16', items: [
+    '🎏 Färgglada vimplar! Över torget hänger snören med röda, orange, gula, gröna, blå och lila vimplar – som en fest i en varm hamnstad.',
+  ]},
   { version: '1.9.2', date: '2026-10-15', items: [
     '🌺 Blomlådor! Under husens fönster och på balkongerna sitter nu lådor fulla med färgglada blommor – röda, rosa, orange, vita, lila och gula.',
   ]},
@@ -2138,7 +2143,8 @@ const moonInSky = new THREE.Mesh(new THREE.SphereGeometry(900, 32, 24), new THRE
 moonInSky.position.set(4000, 16000, -9000); island.add(moonInSky);
 /* ================= 1.9.0: Stil – kolonial hamnstad i fasetterad low-poly =================
    Husdetaljer (valvbågar, fönsterluckor, balkonger i smide, list, hörnkedjor, rankor, skorstenar),
-   hamn med bryggor, båtar och lyftkran, klippor i havet, palmer, agaver, stenar, bänkar, tunnor och lådor, marknadsstånd.
+   hamn med bryggor, båtar och lyftkran, klippor i havet, palmer, agaver, stenar, bänkar, tunnor och lådor, marknadsstånd,
+   vimplar (1.9.3) över torget.
    Allt här är bara utseende (inga nya hinder) så spelet fungerar precis som förut. Låg grafik = färre saker. */
 const DECOR_N = (hi, lo) => (LOWGFX ? lo : hi);
 const dRand = rng(1909);
@@ -2252,6 +2258,60 @@ for (const [a0, col] of [[1.833, '#c4532e'], [4.974, '#2f7f9f']]) {   // marknad
   const aw = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.08, 1.6), mat('#ffffff', { map: tex })); aw.position.set(0, 2.5, -0.15); aw.rotation.x = -0.22; st.add(dShadowy(aw, true));
   const fruit = new THREE.Mesh(dMerge(Array.from({ length: 9 }, (_, i) => dP(new THREE.IcosahedronGeometry(0.13, 0), -0.9 + (i % 5) * 0.4 + (i > 4 ? 0.2 : 0), 1.1 + (i > 4 ? 0.15 : 0), -0.15 + (i > 4 ? 0.15 : 0), 1, 1, 1))), mat(a0 < 3 ? '#ff8a1f' : '#e8c33a')); st.add(fruit);
   dProp('crate', x + Math.sin(a + 1.6) * 1.9, 0.03, z + Math.cos(a + 1.6) * 1.9, a, 0.8); dProp('barrel', x + Math.sin(a - 1.6) * 1.9, 0.03, z + Math.cos(a - 1.6) * 1.9, 0, 0.9);
+}
+
+
+/* ---- 1.9.3: färgglada vimplar (bunting) över torget ---- */
+{
+  const cols = STYLE.pennant;
+  const byCol = cols.map(() => []);
+  const ropeParts = [];
+  // snören mellan punkter runt torget (bågar); LOWGFX = färre snören och färre vimplar
+  const arcs = [
+    [0.35, 10.2, 5.4, Math.PI + 0.25, 10.0, 5.1],
+    [1.55, 9.6, 4.9, Math.PI + 1.45, 9.8, 5.2],
+    [2.65, 10.4, 5.6, Math.PI + 2.55, 10.1, 4.8],
+    [0.95, 8.6, 4.6, Math.PI + 0.85, 8.8, 4.7],
+  ];
+  const nArcs = DECOR_N(4, 2);
+  const pennW = 0.36, pennH = 0.55;
+  const makePenn = () => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([
+      -pennW / 2, 0, 0, pennW / 2, 0, 0, 0, -pennH, 0.04,
+      pennW / 2, 0, 0, -pennW / 2, 0, 0, 0, -pennH, 0.04,
+    ], 3));
+    g.computeVertexNormals();
+    return g;
+  };
+  for (let ai = 0; ai < nArcs; ai++) {
+    const [a0, r0, y0, a1, r1, y1] = arcs[ai];
+    const x0 = Math.sin(a0) * r0, z0 = Math.cos(a0) * r0;
+    const x1 = Math.sin(a1) * r1, z1 = Math.cos(a1) * r1;
+    const sag = 0.85 + (ai % 2) * 0.25;
+    const segs = DECOR_N(10, 6);
+    // tunt snöre: korta lådor längs bågen (stabilare än roterade cylindrar)
+    for (let i = 0; i < segs; i++) {
+      const t0 = i / segs, t1 = (i + 1) / segs, s0 = Math.sin(t0 * Math.PI), s1 = Math.sin(t1 * Math.PI);
+      const ax = x0 + (x1 - x0) * t0, ay = y0 + (y1 - y0) * t0 - sag * s0, az = z0 + (z1 - z0) * t0;
+      const bx = x0 + (x1 - x0) * t1, by = y0 + (y1 - y0) * t1 - sag * s1, bz = z0 + (z1 - z0) * t1;
+      const dx = bx - ax, dy = by - ay, dz = bz - az, len = Math.hypot(dx, dy, dz) || 0.01;
+      const yaw = Math.atan2(dx, dz), pitch = Math.atan2(dy, Math.hypot(dx, dz));
+      ropeParts.push(dP(new THREE.BoxGeometry(0.03, 0.03, len), (ax + bx) / 2, (ay + by) / 2, (az + bz) / 2, 1, 1, 1, -pitch, yaw, 0));
+    }
+    const nPenn = DECOR_N(11, 7);
+    for (let i = 1; i < nPenn; i++) {
+      const t = i / nPenn, s = Math.sin(t * Math.PI);
+      const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t - sag * s, z = z0 + (z1 - z0) * t;
+      const ang = Math.atan2(x1 - x0, z1 - z0);
+      const g = makePenn();
+      g.rotateY(ang);
+      g.translate(x, y - 0.02, z);
+      byCol[i % cols.length].push(g);
+    }
+  }
+  if (ropeParts.length) island.add(dShadowy(new THREE.Mesh(dMerge(ropeParts), mat('#5a4634')), true));
+  cols.forEach((c, i) => { if (byCol[i].length) island.add(dShadowy(new THREE.Mesh(dMerge(byCol[i]), mat(c, { side: THREE.DoubleSide, roughness: 0.7 })), true)); });
 }
 
 /* ---- hamnen: bryggor med stolpar, båtar, lyftkran (vid fyren, mot nordost) ---- */
@@ -2759,7 +2819,7 @@ function openMenu() {
 $('mBody').addEventListener('click', (e) => { const b = e.target.closest('button[data-act]'); if (!b) return;
   if (b.dataset.act === 'rebind') { openRebind(); return; }
   if (b.dataset.act === 'rbcancel') { openMenu(); return; }
-  if (b.dataset.act === 'gfx') { S.gfx = S.gfx === 'auto' ? 'hog' : S.gfx === 'hog' ? 'lag' : 'auto'; save(); sfx.buy(); openMenu(); toast('🎨 Grafik: ' + gfxLabel(S.gfx) + ' – laddar om …', 2); setTimeout(() => { window.removeEventListener('beforeunload', save); save(); location.reload(); }, 900); return; }
+  if (b.dataset.act === 'gfx') { S.gfx = S.gfx === 'auto' ? 'hog' : S.gfx === 'hog' ? 'lag' : 'auto'; save(); sfx.buy(); toast('🎨 Grafik: ' + gfxLabel(S.gfx) + ' – laddar om …', 2); setTimeout(() => { window.removeEventListener('beforeunload', save); window.removeEventListener('pagehide', save); save(); location.reload(); }, 900); return; }
   if (b.dataset.act === 'halloween') { const m = hwCycleMode(); sfx.buy(); openMenu(); toast('🎃 Halloween: ' + hwModeLabel(m), 2); return; }
   if (b.dataset.act === 'rebindreset') { setJumpKey('Space'); sfx.buy(); openMenu(); toast('Hoppknappen är Mellanslag igen.', 2); return; }
   if (b.dataset.act !== 'reset') return;
